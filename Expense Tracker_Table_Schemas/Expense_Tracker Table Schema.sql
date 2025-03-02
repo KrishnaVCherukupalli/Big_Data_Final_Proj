@@ -138,4 +138,20 @@ CREATE TABLE bill_reminders (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+CREATE TABLE user_accounts (
+    account_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    account_name VARCHAR(100) NOT NULL,
+    account_type VARCHAR(50) NOT NULL,
+    current_balance DECIMAL(10,2) DEFAULT 0,
+    currency VARCHAR(10) DEFAULT 'USD',
+    is_active BIT DEFAULT 1,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+
+ALTER TABLE transactions ADD account_id INT NULL;
+ALTER TABLE transactions ADD CONSTRAINT FK_transactions_accounts FOREIGN KEY (account_id) REFERENCES user_accounts(account_id);
+
 
