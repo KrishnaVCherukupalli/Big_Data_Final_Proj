@@ -155,3 +155,69 @@ ALTER TABLE transactions ADD account_id INT NULL;
 ALTER TABLE transactions ADD CONSTRAINT FK_transactions_accounts FOREIGN KEY (account_id) REFERENCES user_accounts(account_id);
 
 
+-- Recurring Transactions Table
+CREATE TABLE recurring_transactions (
+    recurring_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    category_id INT NOT NULL,
+    account_id INT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    transaction_type VARCHAR(10) NOT NULL CHECK (transaction_type IN ('income', 'expense')),
+    frequency VARCHAR(20) NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
+    start_date DATE NOT NULL,
+    end_date DATE NULL,
+    description VARCHAR(MAX) NULL,
+    last_generated_date DATE NULL,
+    is_active BIT DEFAULT 1,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (category_id) REFERENCES categories(category_id),
+    FOREIGN KEY (account_id) REFERENCES user_accounts(account_id)
+);
+
+-- Shared Expenses Table
+CREATE TABLE shared_expenses (
+    shared_id INT IDENTITY(1,1) PRIMARY KEY,
+    transaction_id INT NOT NULL,
+    owner_id INT NOT NULL,
+    shared_with_id INT NOT NULL,
+    amount_owed DECIMAL(10,2) NOT NULL,
+    is_settled BIT DEFAULT 0,
+    settled_date DATE NULL,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id),
+    FOREIGN KEY (owner_id) REFERENCES users(user_id),
+    FOREIGN KEY (shared_with_id) REFERENCES users(user_id)
+);
+
+-- Notifications Table
+CREATE TABLE notifications (
+    notification_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    notification_type VARCHAR(50) NOT NULL CHECK (notification_type IN ('budget_alert', 'bill_reminder', 'low_balance', 'subscription_renewal', 'debt_reminder', 'goal_reached', 'system')),
+    message VARCHAR(255) NOT NULL,
+    related_entity_type VARCHAR(50) NULL,
+    related_entity_id INT NULL,
+    is_read BIT DEFAULT 0,
+    delivery_method VARCHAR(20) DEFAULT 'app' CHECK (delivery_method IN ('app', 'email', 'sms', 'push')),
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- User Activity Log Table
+CREATE TABLE user_activity_log (
+    activity_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    activity_type VARCHAR(50) NOT NULL,
+    description VARCHAR(255) NULL,
+    ip_address VARCHAR(45) NULL,
+    device_info VARCHAR(255) NULL,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- Add missing columns to existing tables
+ALTER TABLE categories ADD icon VARCHAR(50) NULL;
+ALTER TABLE categories ADD color VARCHAR(20) NULL;
+ALTER TABLE budgets ADD alert_threshold INT DEFAULT 90;
+
