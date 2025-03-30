@@ -216,6 +216,25 @@ CREATE TABLE user_activity_log (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+CREATE TABLE error_logs (
+    error_id INT IDENTITY(1,1) PRIMARY KEY,
+    error_message NVARCHAR(MAX),
+    stack_trace NVARCHAR(MAX),
+    occurred_at DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE system_announcements (
+    announcement_id INT IDENTITY(1,1) PRIMARY KEY,
+    title VARCHAR(100),
+    message TEXT,
+    audience_type VARCHAR(20), -- e.g. 'all', 'admins', 'new_users'
+    visible_from DATETIME,
+    visible_to DATETIME,
+    created_at DATETIME DEFAULT GETDATE()
+);
+
+
+
 -- Add missing columns to existing tables
 ALTER TABLE categories ADD icon VARCHAR(50) NULL;
 ALTER TABLE categories ADD color VARCHAR(20) NULL;
