@@ -1,0 +1,147 @@
+Main Loop
+FUNCTION Main():
+    CONNECT to SQL database
+    WHILE True:
+        DISPLAY "Welcome to Expense Tracker"
+        DISPLAY "1. Login"
+        DISPLAY "2. Register"
+        DISPLAY "3. Exit"
+        INPUT choice
+        IF choice == 1:
+            user_id ← AuthenticateUser()
+            IF user_id != NULL:
+                Dashboard(user_id)
+        ELSE IF choice == 2:
+            RegisterUser()
+        ELSE IF choice == 3:
+            DISPLAY "Goodbye!"
+            BREAK
+        ELSE:
+            DISPLAY "Invalid choice"
+
+Registration & Login
+FUNCTION RegisterUser():
+    INPUT name, email, password
+    IF email EXISTS in Users table:
+        DISPLAY "Email already registered"
+    ELSE:
+        hashed_password ← Hash(password)
+        INSERT (name, email, hashed_password) INTO Users
+        DISPLAY "Registration successful"
+FUNCTION AuthenticateUser():
+    INPUT email, password
+    FETCH user FROM Users WHERE email = input_email
+    IF no user:
+        DISPLAY "User not found"
+        RETURN NULL
+    ELSE IF Hash(password) == user.password:
+        RETURN user.user_id
+    ELSE:
+        DISPLAY "Incorrect password"
+        RETURN NULL
+
+Dashboard
+FUNCTION Dashboard(user_id):
+    WHILE True:
+        DISPLAY "1. Add Transaction"
+        DISPLAY "2. Edit Transaction"
+        DISPLAY "3. Delete Transaction"
+        DISPLAY "4. View Reports"
+        DISPLAY "5. Set Budget"
+        DISPLAY "6. View Budget Alerts"
+        DISPLAY "7. Set Savings Goal"
+        DISPLAY "8. Export Data"
+        DISPLAY "9. Logout"
+        INPUT choice
+        SWITCH(choice):
+            CASE 1: AddTransaction(user_id)
+            CASE 2: EditTransaction(user_id)
+            CASE 3: DeleteTransaction(user_id)
+            CASE 4: GenerateReports(user_id)
+            CASE 5: SetBudget(user_id)
+            CASE 6: CheckBudgetAlerts(user_id)
+            CASE 7: SetSavingsGoal(user_id)
+            CASE 8: ExportReports(user_id)
+            CASE 9: BREAK
+            DEFAULT: DISPLAY "Invalid selection"
+
+Transactions
+FUNCTION AddTransaction(user_id):
+    INPUT amount, type (Income/Expense), category_id, date, notes
+    IF amount <= 0:
+        DISPLAY "Invalid amount"
+        RETURN
+    INSERT INTO Transactions(user_id, amount, type, category_id, date, notes)
+    IF type == "Expense":
+        CheckBudgetAlerts(user_id, category_id)
+    DISPLAY "Transaction added"
+FUNCTION EditTransaction(user_id):
+    DISPLAY user's transactions
+    INPUT transaction_id
+    FETCH transaction WHERE id = transaction_id AND user_id = user_id
+    IF not found:
+        DISPLAY "Transaction not found"
+        RETURN
+    INPUT new_amount, new_category_id, new_date, new_notes
+    UPDATE Transactions SET values WHERE transaction_id = input
+    DISPLAY "Transaction updated"
+FUNCTION DeleteTransaction(user_id):
+    DISPLAY user's transactions
+    INPUT transaction_id
+    DELETE FROM Transactions WHERE transaction_id = input AND user_id = user_id
+    DISPLAY "Transaction deleted"
+
+Budget
+FUNCTION SetBudget(user_id):
+    INPUT category_id, month, year, amount
+    IF EXISTS(Budget for user_id, category_id, month, year):
+        UPDATE budget
+    ELSE:
+        INSERT new budget
+    DISPLAY "Budget saved"
+FUNCTION CheckBudgetAlerts(user_id, optional category_id):
+    IF category_id is provided:
+        FETCH total expenses for category in current month
+        FETCH budget for category
+        IF total > budget:
+            DISPLAY "Warning: Budget exceeded for category"
+    ELSE:
+        FOR each category with a budget:
+            REPEAT above logic
+
+ 
+Savings
+FUNCTION SetSavingsGoal(user_id):
+    INPUT goal_name, target_amount, deadline
+    INSERT INTO Goals(user_id, goal_name, target_amount, current_amount=0, deadline)
+    DISPLAY "Goal set"
+
+Reports
+FUNCTION GenerateReports(user_id):
+    DISPLAY "Choose report type"
+    DISPLAY "1. Monthly Summary"
+    DISPLAY "2. Income vs Expense"
+    DISPLAY "3. Category Pie Chart"
+    DISPLAY "4. Yearly Summary"
+    INPUT choice
+    INPUT start_date, end_date
+    FETCH all transactions for user_id within date range
+    SWITCH(choice):
+        CASE 1: DISPLAY total income, total expenses, net savings
+        CASE 2: GROUP by type, DISPLAY bar chart
+        CASE 3: GROUP by category, DISPLAY pie chart
+        CASE 4: GROUP by year, DISPLAY yearly breakdown
+
+Data Export
+FUNCTION ExportReports(user_id):
+    INPUT file_type (CSV/PDF)
+    FETCH all transactions for user_id
+    FORMAT as CSV or PDF
+    SAVE file to local drive
+    DISPLAY "Report exported successfully"
+
+Help Function
+FUNCTION Hash(password):
+    RETURN secure_hash(password)
+FUNCTION email EXISTS(email):
+    RETURN True if SELECT email FROM Users returns a result
