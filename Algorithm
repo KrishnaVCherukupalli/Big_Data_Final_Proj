@@ -1,0 +1,124 @@
+Main Screen
+START
+1.	Connect to SQL Database
+2.	LOOP until user exits:
+a.	SHOW main menu: [Login, Register, Exit]
+b.	IF user chooses Register:
+        CALL RegisterUser()
+c.	    ELSE IF user chooses Login:
+        user_id  to CALL AuthenticateUser()
+        IF login successful:
+            CALL Dashboard(user_id)
+d.	    ELSE IF user chooses Exit:
+        BREAK loop
+END
+User Registration
+1.	PROMPT user for: Name, Email, Password
+2.	VALIDATE email format and password strength
+3.	IF email already exists in Users table:
+       SHOW error message
+   ELSE:
+       HASH password
+       INSERT (name, email, hashed_password) INTO Users table
+       SHOW success message
+User Authentication
+1.	PROMPT user for: Email, Password
+2.	RETRIEVE hashed password from Users WHERE email = input
+3.	IF no such email:
+       RETURN "Invalid login"
+4.	ELSE:
+       IF hashed input password == stored hash:
+            RETURN user_id
+       ELSE:
+            RETURN "Invalid password"
+
+Dashboard
+LOOP:
+    SHOW options:
+1.	Add Transaction
+2.	Edit Transaction
+3.	Delete Transaction
+4.	View Reports
+5.	Set Budget
+6.	View Budget Alerts
+7.	Set Goals
+8.	Export Data
+9.	Logout
+    SWITCH user choice:
+        CASE 1: CALL AddTransaction(user_id)
+        CASE 2: CALL EditTransaction(user_id)
+        CASE 3: CALL DeleteTransaction(user_id)
+        CASE 4: CALL GenerateReports(user_id)
+        CASE 5: CALL SetBudget(user_id)
+        CASE 6: CALL CheckBudgetAlerts(user_id)
+        CASE 7: CALL SetSavingsGoal(user_id)
+        CASE 8: CALL ExportReports(user_id)
+        CASE 9: BREAK loop
+
+Add Transaction
+1.	PROMPT user for:
+a.	Amount
+b.	Type (Income / Expense)
+c.	Category
+d.	Date
+e.	Notes (optional)
+2.	VALIDATE amount and category
+3.	INSERT transaction INTO Transactions table
+4.	IF Type = Expense:
+     	 CALL CheckBudgetAlerts(user_id, category)
+5.	SHOW success message
+Edit Transaction
+1.	DISPLAY user’s transactions
+2.	PROMPT to select a transaction_id to edit
+3.	PROMPT for new values (optional for each field)
+4.	UPDATE Transactions table with new values
+5.	SHOW confirmation
+Delete Transaction
+1.	DISPLAY user’s transactions
+2.	PROMPT to select a transaction_id to delete
+3.	DELETE FROM Transactions WHERE transaction_id = input AND user_id = user_id
+4.	SHOW confirmation
+Generate Reports
+1.	PROMPT for report type:
+a.	Monthly Summary
+b.	Category Breakdown (Pie Chart)
+c.	Income vs Expense (Bar Chart)
+d.	Yearly Financial Summary
+2.	2. PROMPT for date range (start and end)
+3.	3. FETCH transactions within date range
+4.	4. AGGREGATE data by category/type
+5.	5. GENERATE chart or summary view (text or plotly/matplotlib if GUI)
+6.	6. DISPLAY results
+
+Set Budget
+1.	PROMPT for:
+a.	Category
+b.	Month & Year
+c.	Budget Amount
+
+2.	IF budget exists for category & month:
+       UPDATE budget value
+   ELSE:
+       INSERT new budget row
+3.	SHOW confirmation
+Budget Alerts
+1.	FETCH total expenses grouped by category for current month
+2.	FETCH set budgets for each category
+3.	FOR each category:
+      IF total_expense > budget_amount:
+          NOTIFY user (alert message or email)
+4.	IF called from AddTransaction:
+     	 SHOW "Warning: Budget limit exceeded for [Category]"
+Savings Goal
+1.	PROMPT user for:
+a.	Goal Name
+b.	Target Amount
+c.	Deadline
+2.	INSERT INTO Goals table
+3.	SHOW progress tracker on Dashboard
+Export Reports
+1.	PROMPT user for type: CSV / PDF
+2.	FETCH all transactions OR filtered data
+3.	FORMAT data into CSV or PDF
+4.	SAVE or download file
+5.	SHOW success message
