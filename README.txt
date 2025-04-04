@@ -12,7 +12,8 @@ Vikas Manchala
 Lohith Danda
 
 
-Purpose: The purpose of our project is to create a full-featured personal finance web application that allows users to track income, expenses, budgets, savings goals, recurring transactions, and more. It is built using Python (Flask) for the backend and Microsoft SQL Server for the database.
+Project Overview :The Expense Tracker Web Application is a full-featured personal finance management tool built with a Python Flask backend and Microsoft SQL Server as the database. The application empowers users to track income, expenses, budgets, savings goals, and manage recurring transactions—all from a user-friendly web interface.
+This project aims to demonstrate proficiency in full-stack development, database integration, and personal finance concepts through a real-world application.
 
 TECHNOLOGY STACK:
 ---------------------------------------------------------------------
@@ -26,33 +27,33 @@ KEY FEATURES:
 ---------------------------------------------------------------------
 
 USER AUTHENTICATION:
-- Secure login and password hashing (bcrypt)
+- Secure login system using hashed passwords (bcrypt)
 - Session management via Flask-Session
+- Prevents unauthorized access with decorators
 
 TRANSACTION MANAGEMENT:
-- Add, edit, delete income and expense transactions
-- Upload receipt files (PDF, JPG, PNG)
-- Search and filter by type, date, and keywords
-- Export transaction reports to CSV and PDF
+- Add, edit, and delete income and expense records
+- Upload and view receipts (PDF, JPG, PNG)
+- Search and filter transactions by type, date, and keywords
+- Export data to CSV and PDF formats
 
 BUDGETING MODULE:
-- Set monthly budgets by category
-- Color-coded budget usage with alert thresholds
-- Budget trend tracking
-- Move unused budget to savings goals manually
+- Define monthly budgets for each spending category
+- Track budget usage with color-coded progress indicators
+- Receive alerts when nearing budget limits
+- Option to transfer unused budget to savings goals
 
 SAVINGS GOALS:
-- Create and manage savings goals
-- Track progress with visual progress bars
-- Manual contributions and automated savings transfers
-- Edit/delete savings goals
-- Contribution history tracking
+- Create and manage multiple savings goals
+- Visualize progress with progress bars
+- Support for manual and auto contributions
+- Maintain a contribution history log
 
 ADVANCED FEATURES:
-- Multi-account transaction tracking
-- Categories linked to income/expense types
-- Built-in notifications table schema (extendable)
-- Database-logged activity and error logs
+- Track multiple bank or credit accounts separately
+- Category management linked to income/expense types
+- Notification schema included for extendability
+- Full audit log of user activity and errors stored in the database
 
 ---------------------------------------------------------------------
 PROJECT STRUCTURE:
