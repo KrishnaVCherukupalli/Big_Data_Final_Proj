@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contribution History</title>
+</head>
+<body>
+    <h1>Contribution History</h1>
+    <table border="1">
+        <tr><th>Amount</th><th>Date</th></tr>
+        {% for h in history %}
+        <tr>
+            <td>${{ "%.2f"|format(h.amount) }}</td>
+            <td>{{ h.contribution_date }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="/savings">Back to Savings</a>
+</body>
+</html>

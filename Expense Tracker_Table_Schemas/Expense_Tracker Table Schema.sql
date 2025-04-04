@@ -240,3 +240,12 @@ ALTER TABLE categories ADD icon VARCHAR(50) NULL;
 ALTER TABLE categories ADD color VARCHAR(20) NULL;
 ALTER TABLE budgets ADD alert_threshold INT DEFAULT 90;
 
+-- Savings history table
+CREATE TABLE savings_history (
+    history_id INT IDENTITY(1,1) PRIMARY KEY,
+    goal_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    contribution_date DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (goal_id) REFERENCES savings_goals(goal_id)
+);
+

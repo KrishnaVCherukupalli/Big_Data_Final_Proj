@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Savings Goals</title>
+</head>
+<body>
+    <h1>My Savings Goals</h1>
+
+    <!-- Add New Goal Form -->
+    <form method="post">
+        <label>Goal Name:</label>
+        <input type="text" name="goal_name" required><br><br>
+
+        <label>Target Amount:</label>
+        <input type="number" name="target_amount" step="0.01" required><br><br>
+
+        <label>Target Date:</label>
+        <input type="date" name="target_date" required><br><br>
+
+        <button type="submit">Add Goal</button>
+    </form>
+
+    <br><hr><br>
+
+    <!-- Goals Table -->
+    <h2>Active Goals</h2>
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Target</th>
+                <th>Saved</th>
+                <th>Progress</th>
+                <th>Target Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for g in goals %}
+            {% set progress = (g.current_amount / g.target_amount * 100) if g.target_amount > 0 else 0 %}
+            <tr>
+                <td>{{ g.goal_name }}</td>
+                <td>${{ "%.2f"|format(g.target_amount) }}</td>
+                <td>${{ "%.2f"|format(g.current_amount or 0) }}</td>
+
+                <!-- Visual progress bar -->
+                <td>
+                    <div style="width:200px; background:#ddd;">
+                        <div style="width:{{ progress }}%;
+                             background:
+                             {% if progress>
+                            = 100 %}green
+                            {% elif progress >= 70 %}orange
+                            {% else %}red{% endif %};
+                            color:white;
+                            padding:2px;
+                            text-align:center;">
+                            {{ "%.1f"|format(progress) }}%
+                        </div>
+                    </div>
+                </td>
+
+                <td>{{ g.target_date }}</td>
+
+                <td>
+                    {% if progress >= 100 %}
+                    Completed
+                    {% else %}
+                    In Progress
+                    {% endif %}
+                </td>
+
+                <td>
+                    <!-- Manual Contribution Form -->
+                    <form method="post" action="/contribute/{{ g.goal_id }}" style="margin-bottom: 5px;">
+                        <input type="number" name="contribution" step="0.01" placeholder="Add $" required>
+                        <button type="submit"></button>
+                    </form>
+
+                    <a href="/edit_savings/{{ g.goal_id }}">Edit</a><br>
+                    <a href="/delete_savings/{{ g.goal_id }}" onclick="return confirm('Delete this goal?')">Delete</a><br>
+                    <a href="/savings_history/{{ g.goal_id }}">History</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">No savings goals yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+    <a href="/transactions">Back to Dashboard</a>
+</body>
+</html>

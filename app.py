@@ -503,5 +503,129 @@ def move_to_savings():
     session["alert"] = f"${total_moved:.2f} moved to savings for {month}."
     return redirect("/budgets")
 
+##----------------Savings Module-----------------
+##---------------------------------------------
+
+## --------Savings Route------------------
+
+@app.route("/savings", methods=["GET", "POST"])
+@login_required
+def savings():
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        goal_name = request.form.get("goal_name")
+        target_amount = float(request.form.get("target_amount"))
+        target_date = request.form.get("target_date")
+
+        cursor.execute("""
+            INSERT INTO savings_goals (user_id, goal_name, target_amount, target_date)
+            VALUES (?, ?, ?, ?)
+        """, user_id, goal_name, target_amount, target_date)
+        conn.commit()
+
+    # Fetch savings goals
+    cursor.execute("""
+        SELECT goal_id, goal_name, target_amount, current_amount, target_date
+        FROM savings_goals
+        WHERE user_id = ?
+        ORDER BY target_date
+    """, user_id)
+    goals = cursor.fetchall()
+    conn.close()
+
+    return render_template("savings.html", goals=goals)
+
+## ----------Adding to Savings route---------------
+@app.route("/contribute/<int:goal_id>", methods=["POST"])
+@login_required
+def contribute(goal_id):
+    user_id = session["user_id"]
+    amount = float(request.form.get("contribution"))
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Update current_amount
+    cursor.execute("""
+        UPDATE savings_goals
+        SET current_amount = current_amount + ?
+        WHERE goal_id = ? AND user_id = ?
+    """, amount, goal_id, user_id)
+
+    # (Optional) Log to savings history
+    cursor.execute("""
+        INSERT INTO savings_history (goal_id, amount, contribution_date)
+        VALUES (?, ?, GETDATE())
+    """, goal_id, amount)
+
+    conn.commit()
+    conn.close()
+    return redirect("/savings")
+
+## ------------ Edit Savings route---------
+@app.route("/edit_savings/<int:goal_id>", methods=["GET", "POST"])
+@login_required
+def edit_savings(goal_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        goal_name = request.form.get("goal_name")
+        target_amount = float(request.form.get("target_amount"))
+        target_date = request.form.get("target_date")
+
+        cursor.execute("""
+            UPDATE savings_goals
+            SET goal_name = ?, target_amount = ?, target_date = ?
+            WHERE goal_id = ? AND user_id = ?
+        """, goal_name, target_amount, target_date, goal_id, user_id)
+        conn.commit()
+        conn.close()
+        return redirect("/savings")
+
+    cursor.execute("""
+        SELECT * FROM savings_goals
+        WHERE goal_id = ? AND user_id = ?
+    """, goal_id, user_id)
+    goal = cursor.fetchone()
+    conn.close()
+    return render_template("edit_savings.html", goal=goal)
+
+## -----------Delete savings route--------------
+@app.route("/delete_savings/<int:goal_id>")
+@login_required
+def delete_savings(goal_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM savings_goals WHERE goal_id = ? AND user_id = ?", goal_id, user_id)
+    conn.commit()
+    conn.close()
+    return redirect("/savings")
+
+## ------------ Savings history route-----------
+@app.route("/savings_history/<int:goal_id>")
+@login_required
+def savings_history(goal_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT sh.amount, sh.contribution_date
+        FROM savings_history sh
+        JOIN savings_goals sg ON sh.goal_id = sg.goal_id
+        WHERE sg.user_id = ? AND sh.goal_id = ?
+        ORDER BY sh.contribution_date DESC
+    """, user_id, goal_id)
+    history = cursor.fetchall()
+    conn.close()
+
+    return render_template("savings_history.html", history=history, goal_id=goal_id)
+
 
 
