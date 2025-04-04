@@ -73,3 +73,116 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+## Get Categories & Accounts for Current User
+def get_user_categories_and_accounts(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
+    categories = cursor.fetchall()
+
+    cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ?", user_id)
+    accounts = cursor.fetchall()
+    conn.close()
+    return categories, accounts
+
+## view transactions
+@app.route("/transactions")
+@login_required
+def transactions():
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+        SELECT t.transaction_id, t.amount, t.transaction_type, t.transaction_date,
+               t.description, t.receipt_url, c.category_name, a.account_name
+        FROM transactions t
+        LEFT JOIN categories c ON t.category_id = c.category_id
+        LEFT JOIN user_accounts a ON t.account_id = a.account_id
+        WHERE t.user_id = ?
+        ORDER BY t.transaction_date DESC
+    """
+    cursor.execute(query, user_id)
+    transactions = cursor.fetchall()
+    conn.close()
+
+    return render_template("transactions.html", transactions=transactions)
+
+## Adding a transaction
+@app.route("/add_transaction", methods=["GET", "POST"])
+@login_required
+def add_transaction():
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        category_id = int(request.form.get("category_id"))
+        transaction_type = request.form.get("transaction_type")
+        amount = float(request.form.get("amount"))
+        transaction_date = request.form.get("transaction_date")
+        description = request.form.get("description")
+        receipt_url = request.form.get("receipt_url")
+        account_id = request.form.get("account_id") or None
+
+        query = """
+            INSERT INTO transactions (user_id, category_id, amount, transaction_type, transaction_date, description, receipt_url, account_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        cursor.execute(query, user_id, category_id, amount, transaction_type, transaction_date, description, receipt_url, account_id)
+        conn.commit()
+        conn.close()
+        return redirect("/transactions")
+
+    categories, accounts = get_user_categories_and_accounts(user_id)
+    return render_template("add_transaction.html", categories=categories, accounts=accounts)
+
+## Editing a transaction
+@app.route("/edit_transaction/<int:transaction_id>", methods=["GET", "POST"])
+@login_required
+def edit_transaction(transaction_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        category_id = int(request.form.get("category_id"))
+        transaction_type = request.form.get("transaction_type")
+        amount = float(request.form.get("amount"))
+        transaction_date = request.form.get("transaction_date")
+        description = request.form.get("description")
+        receipt_url = request.form.get("receipt_url")
+        account_id = request.form.get("account_id") or None
+
+        query = """
+            UPDATE transactions
+            SET category_id = ?, transaction_type = ?, amount = ?, transaction_date = ?, 
+                description = ?, receipt_url = ?, account_id = ?
+            WHERE transaction_id = ? AND user_id = ?
+        """
+        cursor.execute(query, category_id, transaction_type, amount, transaction_date,
+                       description, receipt_url, account_id, transaction_id, user_id)
+        conn.commit()
+        conn.close()
+        return redirect("/transactions")
+
+    # Fetch current transaction
+    cursor.execute("SELECT * FROM transactions WHERE transaction_id = ? AND user_id = ?", transaction_id, user_id)
+    transaction = cursor.fetchone()
+    categories, accounts = get_user_categories_and_accounts(user_id)
+    conn.close()
+    return render_template("edit_transaction.html", transaction=transaction, categories=categories, accounts=accounts)
+
+## Delete transaction
+@app.route("/delete_transaction/<int:transaction_id>")
+@login_required
+def delete_transaction(transaction_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM transactions WHERE transaction_id = ? AND user_id = ?", transaction_id, user_id)
+    conn.commit()
+    conn.close()
+    return redirect("/transactions")
+
