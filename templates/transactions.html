@@ -4,8 +4,38 @@
     <title>My Transactions</title>
 </head>
 <body>
-    <h1>My Transactions</h1>
-    <a href="/add_transaction">➕ Add Transaction</a>
+    <h1>📊 My Transactions</h1>
+
+    {% if alert %}
+    <p style="color:red;">{{ alert }}</p>
+    {% endif %}
+
+    <form method="get" action="/transactions">
+        <label>Type:</label>
+        <select name="type">
+            <option value="">All</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+        </select>
+        <label>Date:</label>
+        <input type="date" name="from"> to <input type="date" name="to">
+        <input type="text" name="keyword" placeholder="Search description...">
+        <button type="submit">Filter</button>
+    </form>
+
+    <form method="post" action="/export_transactions">
+        <label>Export:</label>
+        <select name="format">
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+        </select>
+        <button type="submit">Download</button>
+    </form>
+
+    <br>
+    <a href="/add_transaction">➕ Add New Transaction</a>
+    <br><br>
+
     <table border="1" cellpadding="8" cellspacing="0">
         <thead>
             <tr>
@@ -30,7 +60,7 @@
                 <td>{{ txn.account_name or 'N/A' }}</td>
                 <td>
                     {% if txn.receipt_url %}
-                    <a href="{{ txn.receipt_url }}" target="_blank">📎 View</a>
+                    <a href="{{ '/' + txn.receipt_url }}" target="_blank">📎 View</a>
                     {% else %}
                     -
                     {% endif %}

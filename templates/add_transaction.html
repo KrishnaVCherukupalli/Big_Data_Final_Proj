@@ -4,8 +4,9 @@
     <title>Add Transaction</title>
 </head>
 <body>
-    <h1>Add Transaction</h1>
-    <form method="post">
+    <h1>➕ Add Transaction</h1>
+
+    <form method="post" enctype="multipart/form-data">
         <label>Category:</label>
         <select name="category_id" required>
             {% for c in categories %}
@@ -28,8 +29,8 @@
         <label>Description:</label>
         <input type="text" name="description"><br><br>
 
-        <label>Receipt URL:</label>
-        <input type="url" name="receipt_url"><br><br>
+        <label>Receipt Upload (PNG/JPG/PDF):</label>
+        <input type="file" name="receipt_file"><br><br>
 
         <label>Account (optional):</label>
         <select name="account_id">
