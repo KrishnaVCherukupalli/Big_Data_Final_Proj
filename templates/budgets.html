@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Budgets</title>
+</head>
+<body>
+    <h1>Monthly Budgets</h1>
+
+    <form method="post">
+        <label>Category:</label>
+        <select name="category_id" required>
+            {% for cat in categories %}
+            <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label>Budget Month:</label>
+        <input type="month" name="budget_month" required><br><br>
+
+        <label>Budget Amount:</label>
+        <input type="number" name="budget_amount" step="0.01" required><br><br>
+
+        <label>Alert Threshold % (default 90):</label>
+        <input type="number" name="alert_threshold" min="50" max="100"><br><br>
+
+        <button type="submit">Save Budget</button>
+    </form>
+
+    <br><hr><br>
+
+    <h2>Existing Budgets</h2>
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Category</th>
+                <th>Budget</th>
+                <th>Spent</th>
+                <th>Used %</th>
+                <th>Alert %</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in budgets %}
+            {% set usage = (b.total_spent / b.budget_amount * 100) if b.budget_amount > 0 else 0 %}
+            <tr>
+                <td>{{ b.budget_month }}</td>
+                <td>{{ b.category_name }}</td>
+                <td>${{ "%.2f"|format(b.budget_amount) }}</td>
+                <td>${{ "%.2f"|format(b.total_spent or 0) }}</td>
+                <td style="color:
+                    {% if usage>
+                    90 %}red
+                    {% elif usage > 70 %}orange
+                    {% else %}green{% endif %}
+                    ">
+                    {{ "%.1f"|format(usage) }}%
+                </td>
+                <td>{{ b.alert_threshold }}%</td>
+                <td>
+                    <a href="/edit_budget/{{ b.budget_id }}">Edit</a> |
+                    <a href="/delete_budget/{{ b.budget_id }}" onclick="return confirm('Delete budget?');">Delete</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">No budgets set yet.</td></tr>
+            {% endfor %}
+        </tbody>

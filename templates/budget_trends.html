@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Budget Trends</title>
+</head>
+<body>
+    <h1>Budget Trends</h1>
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Category</th>
+                <th>Budgeted</th>
+                <th>Spent</th>
+                <th>Used %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in trends %}
+            {% set usage = (row.total_spent / row.budget_amount * 100) if row.budget_amount else 0 %}
+            <tr>
+                <td>{{ row.month }}</td>
+                <td>{{ row.category_name }}</td>
+                <td>${{ "%.2f"|format(row.budget_amount) }}</td>
+                <td>${{ "%.2f"|format(row.total_spent or 0) }}</td>
+                <td style="color:
+                    {% if usage>
+                    90 %}red
+                    {% elif usage > 70 %}orange
+                    {% else %}green{% endif %}
+                    ">
+                    {{ "%.1f"|format(usage) }}%
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <a href="/budgets">Back to Budgets</a>
+</body>
+</html>

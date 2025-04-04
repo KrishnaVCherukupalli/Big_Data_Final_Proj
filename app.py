@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from fpdf import FPDF
 from helpers import login_required
+from datetime import datetime
 
 ## -------------Flask configuration ----------------
 app = Flask(__name__)
@@ -309,23 +310,182 @@ def export_transactions():
         return send_file(output, mimetype='application/pdf', as_attachment=True, download_name="transactions.pdf")
 
 
-##---------------------------------------------
-##---------------------------------------------
-##---------------------------------------------
-##---------------------------------------------
+##--------------Budget Module--------------
+
+##--------------Budget route----------------
+@app.route("/budgets", methods=["GET", "POST"])
+@login_required
+def budgets():
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        category_id = int(request.form.get("category_id"))
+        budget_amount = float(request.form.get("budget_amount"))
+        budget_month = request.form.get("budget_month")
+        threshold = int(request.form.get("alert_threshold") or 90)
+
+        # Format date to first of month
+        month_start = datetime.strptime(budget_month, "%Y-%m").replace(day=1).date()
+
+        # Check if budget exists
+        cursor.execute("""
+            SELECT budget_id FROM budgets
+            WHERE user_id = ? AND category_id = ? AND budget_month = ?
+        """, user_id, category_id, month_start)
+        existing = cursor.fetchone()
+
+        if existing:
+            cursor.execute("""
+                UPDATE budgets SET budget_amount = ?, alert_threshold = ?
+                WHERE budget_id = ?
+            """, budget_amount, threshold, existing.budget_id)
+        else:
+            cursor.execute("""
+                INSERT INTO budgets (user_id, category_id, budget_amount, budget_month, alert_threshold)
+                VALUES (?, ?, ?, ?, ?)
+            """, user_id, category_id, budget_amount, month_start, threshold)
+
+        conn.commit()
+        conn.close()
+        return redirect("/budgets")
+
+    # Get user's budgets
+    cursor.execute("""
+        SELECT b.budget_id, b.budget_month, b.budget_amount, b.alert_threshold, c.category_name,
+            (SELECT SUM(t.amount)
+             FROM transactions t
+            WHERE t.user_id = b.user_id AND t.category_id = b.category_id
+                AND t.transaction_type = 'expense'
+                AND FORMAT(t.transaction_date, 'yyyy-MM') = FORMAT(b.budget_month, 'yyyy-MM')
+            ) AS total_spent
+        FROM budgets b
+        JOIN categories c ON b.category_id = c.category_id
+        WHERE b.user_id = ?
+        ORDER BY b.budget_month DESC
+    """, user_id)
+    budgets = cursor.fetchall()
 
 
-## Adding reciepts
-UPLOAD_FOLDER = "static/receipts"
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+    # Get categories
+    cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
+    categories = cursor.fetchall()
+    conn.close()
 
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+    return render_template("budgets.html", budgets=budgets, categories=categories)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+##-----------Editing the Budget-----------------------
+@app.route("/edit_budget/<int:budget_id>", methods=["GET", "POST"])
+@login_required
+def edit_budget(budget_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
 
-##---------------------------------------------
-##---------------------------------------------
-##---------------------------------------------
-##---------------------------------------------
+    if request.method == "POST":
+        budget_amount = float(request.form.get("budget_amount"))
+        threshold = int(request.form.get("alert_threshold"))
+
+        cursor.execute("""
+            UPDATE budgets SET budget_amount = ?, alert_threshold = ?
+            WHERE budget_id = ? AND user_id = ?
+        """, budget_amount, threshold, budget_id, user_id)
+
+        conn.commit()
+        conn.close()
+        return redirect("/budgets")
+
+    cursor.execute("""
+        SELECT b.*, c.category_name FROM budgets b
+        JOIN categories c ON b.category_id = c.category_id
+        WHERE b.budget_id = ? AND b.user_id = ?
+    """, budget_id, user_id)
+    budget = cursor.fetchone()
+    conn.close()
+    return render_template("edit_budget.html", budget=budget)
+
+##-----------Deleting the budget------------
+
+@app.route("/delete_budget/<int:budget_id>")
+@login_required
+def delete_budget(budget_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM budgets WHERE budget_id = ? AND user_id = ?", budget_id, user_id)
+    conn.commit()
+    conn.close()
+    return redirect("/budgets")
+
+## -------- Adding Budget Trend route------------
+@app.route("/budget_trends")
+@login_required
+def budget_trends():
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+    SELECT FORMAT(b.budget_month, 'yyyy-MM') AS month, c.category_name,
+           b.budget_amount,
+           (SELECT SUM(amount)
+            FROM transactions
+            WHERE user_id = b.user_id
+              AND category_id = b.category_id
+              AND transaction_type = 'expense'
+              AND FORMAT(transaction_date, 'yyyy-MM') = FORMAT(b.budget_month, 'yyyy-MM')
+           ) AS total_spent
+    FROM budgets b
+    JOIN categories c ON b.category_id = c.category_id
+    WHERE b.user_id = ?
+    ORDER BY b.budget_month DESC, c.category_name
+    """
+    cursor.execute(query, user_id)
+    trends = cursor.fetchall()
+    conn.close()
+
+    return render_template("budget_trends.html", trends=trends)
+
+## ------- Move remaining budget to savings------------
+
+@app.route("/move_to_savings/<month>")
+@login_required
+def move_to_savings(month):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    budget_month = f"{month}-01"
+
+    # For each category's remaining budget
+    cursor.execute("""
+        SELECT b.category_id, b.budget_amount,
+               (SELECT SUM(t.amount)
+                FROM transactions t
+                WHERE t.user_id = b.user_id AND t.category_id = b.category_id
+                AND t.transaction_type = 'expense'
+                AND FORMAT(t.transaction_date, 'yyyy-MM') = FORMAT(b.budget_month, 'yyyy-MM')
+               ) AS total_spent
+        FROM budgets b
+        WHERE b.user_id = ? AND b.budget_month = ?
+    """, user_id, budget_month)
+    rows = cursor.fetchall()
+
+    for row in rows:
+        spent = row.total_spent or 0
+        remaining = row.budget_amount - spent
+        if remaining > 0:
+            # Add to savings (assume one default savings goal for now)
+            cursor.execute("""
+                UPDATE savings_goals
+                SET current_amount = current_amount + ?
+                WHERE user_id = ? AND target_date >= GETDATE()
+            """, remaining, user_id)
+
+    conn.commit()
+    conn.close()
+    session["alert"] = f"Remaining budget from {month} moved to savings!"
+    return redirect("/budgets")
+
 

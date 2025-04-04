@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Budget</title>
+</head>
+<body>
+    <h1>Edit Budget</h1>
+    <form method="post">
+        <p><b>Category:</b> {{ budget.category_name }}</p>
+        <p><b>Month:</b> {{ budget.budget_month }}</p>
+
+        <label>New Amount:</label>
+        <input type="number" name="budget_amount" value="{{ budget.budget_amount }}" step="0.01" required><br><br>
+
+        <label>Alert Threshold %:</label>
+        <input type="number" name="alert_threshold" value="{{ budget.alert_threshold }}" min="50" max="100"><br><br>
+
+        <button type="submit">Update Budget</button>
+    </form>
+    <br><a href="/budgets">Back to Budgets</a>
+</body>
+</html>
