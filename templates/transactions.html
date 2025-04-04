@@ -1,11 +1,49 @@
 ﻿<!DOCTYPE html>
-
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
-    <meta charset="utf-8" />
-    <title></title>
+    <title>My Transactions</title>
 </head>
 <body>
-
+    <h1>My Transactions</h1>
+    <a href="/add_transaction">➕ Add Transaction</a>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Account</th>
+                <th>Receipt</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for txn in transactions %}
+            <tr>
+                <td>{{ txn.transaction_date }}</td>
+                <td>{{ txn.transaction_type | capitalize }}</td>
+                <td>{{ txn.category_name or 'N/A' }}</td>
+                <td>${{ "%.2f"|format(txn.amount) }}</td>
+                <td>{{ txn.description or '' }}</td>
+                <td>{{ txn.account_name or 'N/A' }}</td>
+                <td>
+                    {% if txn.receipt_url %}
+                    <a href="{{ txn.receipt_url }}" target="_blank">📎 View</a>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="/edit_transaction/{{ txn.transaction_id }}">✏️ Edit</a> |
+                    <a href="/delete_transaction/{{ txn.transaction_id }}" onclick="return confirm('Delete this transaction?');">🗑️ Delete</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8">No transactions found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

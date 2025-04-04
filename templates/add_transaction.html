@@ -1,11 +1,47 @@
 ﻿<!DOCTYPE html>
-
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
-    <meta charset="utf-8" />
-    <title></title>
+    <title>Add Transaction</title>
 </head>
 <body>
+    <h1>Add Transaction</h1>
+    <form method="post">
+        <label>Category:</label>
+        <select name="category_id" required>
+            {% for c in categories %}
+            <option value="{{ c.category_id }}">{{ c.category_name }}</option>
+            {% endfor %}
+        </select><br><br>
 
+        <label>Type:</label>
+        <select name="transaction_type" required>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+        </select><br><br>
+
+        <label>Amount:</label>
+        <input type="number" name="amount" step="0.01" required><br><br>
+
+        <label>Date:</label>
+        <input type="date" name="transaction_date" required><br><br>
+
+        <label>Description:</label>
+        <input type="text" name="description"><br><br>
+
+        <label>Receipt URL:</label>
+        <input type="url" name="receipt_url"><br><br>
+
+        <label>Account (optional):</label>
+        <select name="account_id">
+            <option value="">-- None --</option>
+            {% for acc in accounts %}
+            <option value="{{ acc.account_id }}">{{ acc.account_name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <button type="submit">Save Transaction</button>
+    </form>
+    <br>
+    <a href="/transactions">← Back to Transactions</a>
 </body>
 </html>
