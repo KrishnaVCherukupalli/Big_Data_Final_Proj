@@ -27,7 +27,17 @@
     </form>
 
     <br><hr><br>
-
+    <h2>Move Unused Budget to Savings</h2>
+    <form method="get" action="/move_to_savings">
+        <label>Select Month:</label>
+        <select name="month" required>
+            {% for m in available_months %}
+            <option value="{{ m }}">{{ m }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Move to Savings</button>
+    </form>
+    <hr>
     <h2>Existing Budgets</h2>
     <table border="1" cellpadding="8">
         <thead>

@@ -367,13 +367,23 @@ def budgets():
     """, user_id)
     budgets = cursor.fetchall()
 
+    # # Get  available budget months for move-to-savings dropdown
+    cursor.execute("""
+        SELECT DISTINCT FORMAT(budget_month, 'yyyy-MM') AS month
+        FROM budgets
+        WHERE user_id = ?
+        ORDER BY month DESC
+    """, user_id)
+    available_months = [row.month for row in cursor.fetchall()]
+
+
 
     # Get categories
     cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
     categories = cursor.fetchall()
     conn.close()
 
-    return render_template("budgets.html", budgets=budgets, categories=categories)
+    return render_template("budgets.html", budgets=budgets, categories=categories, available_months=available_months)
 
 ##-----------Editing the Budget-----------------------
 @app.route("/edit_budget/<int:budget_id>", methods=["GET", "POST"])
@@ -449,16 +459,19 @@ def budget_trends():
 
 ## ------- Move remaining budget to savings------------
 
-@app.route("/move_to_savings/<month>")
+@app.route("/move_to_savings")
 @login_required
-def move_to_savings(month):
+def move_to_savings():
     user_id = session["user_id"]
+    month = request.args.get("month")
+    if not month:
+        session["alert"] = "No month selected."
+        return redirect("/budgets")
+
     conn = get_connection()
     cursor = conn.cursor()
-
     budget_month = f"{month}-01"
 
-    # For each category's remaining budget
     cursor.execute("""
         SELECT b.category_id, b.budget_amount,
                (SELECT SUM(t.amount)
@@ -472,11 +485,13 @@ def move_to_savings(month):
     """, user_id, budget_month)
     rows = cursor.fetchall()
 
+    total_moved = 0
+
     for row in rows:
         spent = row.total_spent or 0
         remaining = row.budget_amount - spent
         if remaining > 0:
-            # Add to savings (assume one default savings goal for now)
+            total_moved += remaining
             cursor.execute("""
                 UPDATE savings_goals
                 SET current_amount = current_amount + ?
@@ -485,7 +500,8 @@ def move_to_savings(month):
 
     conn.commit()
     conn.close()
-    session["alert"] = f"Remaining budget from {month} moved to savings!"
+    session["alert"] = f"${total_moved:.2f} moved to savings for {month}."
     return redirect("/budgets")
+
 
 
