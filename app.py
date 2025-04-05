@@ -10,6 +10,8 @@ from fpdf import FPDF
 from helpers import login_required
 from datetime import datetime, timedelta
 from contextlib import contextmanager
+from db import with_connection
+from helpers import login_required
 
 ## -------------Flask configuration ----------------
 app = Flask(__name__)
