@@ -1,12 +1,12 @@
-Drop table users;
-drop table user_sessions;
-drop table categories;
-drop table transactions;
-drop table budgets;
-drop table savings_goals;
-drop table subscriptions;
-drop table debts;
-drop table bill_reminders;
+Drop table if exists users;
+drop table if exists user_sessions;
+drop table if exists categories;
+drop table if exists transactions;
+drop table if exists budgets;
+drop table if exists savings_goals;
+drop table if exists subscriptions;
+drop table if exists debts;
+drop table if exists bill_reminders;
 --dropping all tables
 
 
@@ -17,13 +17,11 @@ CREATE TABLE users (
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL, -- Hashed password
     phone_number VARCHAR(15),
-    currency VARCHAR(10) DEFAULT 'USD',
+    currency VARCHAR(10) DEFAULT 'CAD',
     email_verified  BIT DEFAULT 0,
     two_factor_enabled  BIT DEFAULT 0,
     created_at DATETIME DEFAULT GETDATE()
 );
-
-
 
 -- To track active logins
 
@@ -45,10 +43,24 @@ CREATE TABLE categories (
     category_name VARCHAR(50) NOT NULL UNIQUE,
     category_type VARCHAR(10) NOT NULL CHECK (category_type IN ('income', 'expense')), 
     user_id INT NOT NULL,
+    icon VARCHAR(50),
+    color VARCHAR(20),
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+
+CREATE TABLE user_accounts (
+    account_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    account_name VARCHAR(100) NOT NULL,
+    account_type VARCHAR(50) NOT NULL,
+    current_balance DECIMAL(10,2) DEFAULT 0,
+    currency VARCHAR(10) DEFAULT 'CAD',
+    is_active BIT DEFAULT 1,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
 
 --Transactions Table
 
@@ -56,17 +68,18 @@ CREATE TABLE transactions (
     transaction_id INT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL,
     category_id INT NOT NULL,
+    account_id INT NULL,
     amount DECIMAL(10,2) NOT NULL,
     transaction_type VARCHAR(10) NOT NULL CHECK (transaction_type IN ('income', 'expense')), 
     transaction_date DATE NOT NULL,
-    description VARCHAR(MAX) NULL, -- Fixed: Changed TEXT to VARCHAR(MAX)
+    description VARCHAR(MAX) NULL,
     receipt_url VARCHAR(255) NULL,
+    is_recurring_generated BIT DEFAULT 0,
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
+    FOREIGN KEY (account_id) REFERENCES user_accounts(account_id)
 );
-
-
 
 
 --Budgets Table
@@ -77,11 +90,11 @@ CREATE TABLE budgets (
     category_id INT NOT NULL,
     budget_amount DECIMAL(10,2) NOT NULL,
     budget_month DATE NOT NULL,
+    alert_threshold INT DEFAULT 90,
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );
-
 
 
 --Savings Goal table
@@ -97,6 +110,16 @@ CREATE TABLE savings_goals (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+-- Savings history table
+CREATE TABLE savings_history (
+    history_id INT IDENTITY(1,1) PRIMARY KEY,
+    goal_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    contribution_date DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (goal_id) REFERENCES savings_goals(goal_id)
+);
+
+
 --Subscriptions table
 
 CREATE TABLE subscriptions (
@@ -110,6 +133,7 @@ CREATE TABLE subscriptions (
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
 
 --Debt Tracker Table
 
@@ -134,25 +158,9 @@ CREATE TABLE bill_reminders (
     amount DECIMAL(10,2) NOT NULL,
     due_date DATE NOT NULL,
     status VARCHAR(10) DEFAULT 'pending' CHECK (status IN ('pending', 'paid')), 
-    created_at DATETIME DEFAULT GETDATE(), -- Fixed!
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
-);
-
-CREATE TABLE user_accounts (
-    account_id INT IDENTITY(1,1) PRIMARY KEY,
-    user_id INT NOT NULL,
-    account_name VARCHAR(100) NOT NULL,
-    account_type VARCHAR(50) NOT NULL,
-    current_balance DECIMAL(10,2) DEFAULT 0,
-    currency VARCHAR(10) DEFAULT 'USD',
-    is_active BIT DEFAULT 1,
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
-
-
-ALTER TABLE transactions ADD account_id INT NULL;
-ALTER TABLE transactions ADD CONSTRAINT FK_transactions_accounts FOREIGN KEY (account_id) REFERENCES user_accounts(account_id);
 
 
 -- Recurring Transactions Table
@@ -174,6 +182,7 @@ CREATE TABLE recurring_transactions (
     FOREIGN KEY (category_id) REFERENCES categories(category_id),
     FOREIGN KEY (account_id) REFERENCES user_accounts(account_id)
 );
+
 
 -- Shared Expenses Table
 CREATE TABLE shared_expenses (
@@ -233,13 +242,6 @@ CREATE TABLE system_announcements (
     created_at DATETIME DEFAULT GETDATE()
 );
 
-
-
--- Add missing columns to existing tables
-ALTER TABLE categories ADD icon VARCHAR(50) NULL;
-ALTER TABLE categories ADD color VARCHAR(20) NULL;
-ALTER TABLE budgets ADD alert_threshold INT DEFAULT 90;
-
 -- Savings history table
 CREATE TABLE savings_history (
     history_id INT IDENTITY(1,1) PRIMARY KEY,
@@ -247,39 +249,4 @@ CREATE TABLE savings_history (
     amount DECIMAL(10,2) NOT NULL,
     contribution_date DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (goal_id) REFERENCES savings_goals(goal_id)
-);
-
--- Recurring transactions table
-
-CREATE TABLE recurring_transactions (
-    recurring_id INT IDENTITY(1,1) PRIMARY KEY,
-    user_id INT NOT NULL,
-    category_id INT NOT NULL,
-    account_id INT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    transaction_type VARCHAR(10) CHECK (transaction_type IN ('income', 'expense')),
-    frequency VARCHAR(20) CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
-    start_date DATE NOT NULL,
-    end_date DATE NULL,
-    description VARCHAR(MAX),
-    last_generated_date DATE NULL,
-    is_active BIT DEFAULT 1,
-    created_at DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (category_id) REFERENCES categories(category_id),
-    FOREIGN KEY (account_id) REFERENCES user_accounts(account_id)
-);
-
-
-ALTER TABLE transactions ADD is_recurring_generated BIT DEFAULT 0;
-
-CREATE TABLE bill_reminders (
-    bill_id INT IDENTITY(1,1) PRIMARY KEY,
-    user_id INT NOT NULL,
-    bill_name VARCHAR(100) NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    due_date DATE NOT NULL,
-    status VARCHAR(10) DEFAULT 'pending' CHECK (status IN ('pending', 'paid')), 
-    created_at DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
