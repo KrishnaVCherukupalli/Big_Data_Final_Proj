@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from fpdf import FPDF
 from helpers import login_required
-from datetime import datetime
+from datetime import datetime, timedelta
 
 ## -------------Flask configuration ----------------
 app = Flask(__name__)
@@ -628,4 +628,165 @@ def savings_history(goal_id):
     return render_template("savings_history.html", history=history, goal_id=goal_id)
 
 
+##---------------Recurring transactions Module-------------
+##--------------------------------------------------------
+
+## Add recurring transaction route-------------------
+
+@app.route("/recurring", methods=["GET", "POST"])
+@login_required
+def recurring():
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        category_id = int(request.form.get("category_id"))
+        transaction_type = request.form.get("transaction_type")
+        amount = float(request.form.get("amount"))
+        frequency = request.form.get("frequency")
+        start_date = request.form.get("start_date")
+        end_date = request.form.get("end_date") or None
+        description = request.form.get("description")
+        account_id = request.form.get("account_id") or None
+
+        cursor.execute("""
+            INSERT INTO recurring_transactions 
+            (user_id, category_id, account_id, amount, transaction_type, frequency,
+             start_date, end_date, description, last_generated_date, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 1)
+        """, user_id, category_id, account_id, amount, transaction_type,
+             frequency, start_date, end_date, description)
+        conn.commit()
+
+    # View all recurring transactions
+    cursor.execute("""
+        SELECT rt.recurring_id, rt.amount, rt.transaction_type, rt.frequency,
+               rt.start_date, rt.end_date, rt.last_generated_date, rt.is_active,
+               c.category_name, a.account_name
+        FROM recurring_transactions rt
+        JOIN categories c ON rt.category_id = c.category_id
+        LEFT JOIN user_accounts a ON rt.account_id = a.account_id
+        WHERE rt.user_id = ?
+        ORDER BY rt.start_date DESC
+    """, user_id)
+    recurs = cursor.fetchall()
+
+    # Fetch category/account options
+    cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
+    categories = cursor.fetchall()
+
+    cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ?", user_id)
+    accounts = cursor.fetchall()
+
+    conn.close()
+
+    return render_template("recurring.html", recurs=recurs, categories=categories, accounts=accounts)
+
+##----------Auto Generate recurring transactions route--------
+@app.route("/generate_recurring")
+@login_required
+def generate_recurring():
+    user_id = session["user_id"]
+    today = datetime.today().date()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Fetch all active recurring transactions
+    cursor.execute("""
+        SELECT * FROM recurring_transactions
+        WHERE user_id = ? AND is_active = 1
+    """, user_id)
+    recurs = cursor.fetchall()
+
+    generated_count = 0
+
+    for r in recurs:
+        last_date = r.last_generated_date or r.start_date
+        next_due = last_date
+
+        # Determine next due date
+        if r.frequency == 'daily':
+            next_due = last_date + timedelta(days=1)
+        elif r.frequency == 'weekly':
+            next_due = last_date + timedelta(weeks=1)
+        elif r.frequency == 'monthly':
+            next_due = (last_date.replace(day=1) + timedelta(days=32)).replace(day=1)
+        elif r.frequency == 'yearly':
+            next_due = last_date.replace(year=last_date.year + 1)
+
+        # Check if it's due and within range
+        if today >= next_due and (not r.end_date or today <= r.end_date):
+            # Insert into transactions
+            cursor.execute("""
+                INSERT INTO transactions (
+                    user_id, category_id, amount, transaction_type,
+                    transaction_date, description, receipt_url, account_id,
+                    is_recurring_generated
+                )
+                VALUES (?, ?, ?, ?, ?, ?, NULL, ?, 1)
+            """, r.user_id, r.category_id, r.amount, r.transaction_type,
+                 today, r.description, r.account_id)
+
+            # Update last_generated_date
+            cursor.execute("""
+                UPDATE recurring_transactions
+                SET last_generated_date = ?
+                WHERE recurring_id = ?
+            """, today, r.recurring_id)
+
+            generated_count += 1
+
+    conn.commit()
+    conn.close()
+
+    session["alert"] = f"{generated_count} transaction(s) generated."
+    return redirect("/transactions")
+
+##------Edit recurring transactions-----------
+
+@app.route("/edit_recurring/<int:recurring_id>", methods=["GET", "POST"])
+@login_required
+def edit_recurring(recurring_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        category_id = int(request.form.get("category_id"))
+        transaction_type = request.form.get("transaction_type")
+        amount = float(request.form.get("amount"))
+        frequency = request.form.get("frequency")
+        start_date = request.form.get("start_date")
+        end_date = request.form.get("end_date") or None
+        description = request.form.get("description")
+        account_id = request.form.get("account_id") or None
+        is_active = int(request.form.get("is_active"))
+
+        cursor.execute("""
+            UPDATE recurring_transactions
+            SET category_id = ?, transaction_type = ?, amount = ?, frequency = ?,
+                start_date = ?, end_date = ?, description = ?, account_id = ?, is_active = ?
+            WHERE recurring_id = ? AND user_id = ?
+        """, category_id, transaction_type, amount, frequency, start_date,
+             end_date, description, account_id, is_active, recurring_id, user_id)
+        conn.commit()
+        conn.close()
+        return redirect("/recurring")
+
+    # Fetch existing recurring txn
+    cursor.execute("""
+        SELECT * FROM recurring_transactions
+        WHERE recurring_id = ? AND user_id = ?
+    """, recurring_id, user_id)
+    r = cursor.fetchone()
+
+    # Fetch dropdowns
+    cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
+    categories = cursor.fetchall()
+    cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ?", user_id)
+    accounts = cursor.fetchall()
+    conn.close()
+
+    return render_template("edit_recurring.html", r=r, categories=categories, accounts=accounts)
 
