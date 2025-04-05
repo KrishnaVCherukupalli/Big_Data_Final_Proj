@@ -9,7 +9,7 @@ Krishna Vamsi Cherukupalli
 Phani Krishna Mallampati
 Paras Rupani
 Vikas Manchala
-Lohith Danda
+Lohith Reddy  Danda
 
 
 Project Overview :The Expense Tracker Web Application is a full-featured personal finance management tool built with a Python Flask backend and Microsoft SQL Server as the database. The application empowers users to track income, expenses, budgets, savings goals, and manage recurring transactions—all from a user-friendly web interface.
