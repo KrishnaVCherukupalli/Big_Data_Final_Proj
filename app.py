@@ -790,3 +790,296 @@ def edit_recurring(recurring_id):
 
     return render_template("edit_recurring.html", r=r, categories=categories, accounts=accounts)
 
+## -----------Bill remainder module---------------
+##--------------------------------------------------
+
+## ----View and add remainders------------
+@app.route("/bills", methods=["GET", "POST"])
+@login_required
+def bills():
+    user_id = session["user_id"]
+    notify_upcoming_bills(user_id)
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        bill_name = request.form.get("bill_name")
+        amount = float(request.form.get("amount"))
+        due_date = request.form.get("due_date")
+
+        cursor.execute("""
+            INSERT INTO bill_reminders (user_id, bill_name, amount, due_date)
+            VALUES (?, ?, ?, ?)
+        """, user_id, bill_name, amount, due_date)
+        conn.commit()
+
+    cursor.execute("""
+        SELECT * FROM bill_reminders
+        WHERE user_id = ?
+        ORDER BY due_date ASC
+    """, user_id)
+    bills = cursor.fetchall()
+    conn.close()
+
+    return render_template("bills.html", bills=bills)
+
+## -----------mark bills as paid-----------------
+@app.route("/mark_bill_paid/<int:bill_id>")
+@login_required
+def mark_bill_paid(bill_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE bill_reminders SET status = 'paid'
+        WHERE bill_id = ? AND user_id = ?
+    """, bill_id, user_id)
+    conn.commit()
+    conn.close()
+    return redirect("/bills")
+
+## ---------- Edit bill remainder------------
+@app.route("/edit_bill/<int:bill_id>", methods=["GET", "POST"])
+@login_required
+def edit_bill(bill_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        bill_name = request.form.get("bill_name")
+        amount = float(request.form.get("amount"))
+        due_date = request.form.get("due_date")
+        status = request.form.get("status")
+
+        cursor.execute("""
+            UPDATE bill_reminders
+            SET bill_name = ?, amount = ?, due_date = ?, status = ?
+            WHERE bill_id = ? AND user_id = ?
+        """, bill_name, amount, due_date, status, bill_id, user_id)
+        conn.commit()
+        conn.close()
+        return redirect("/bills")
+
+    # Fetch bill details
+    cursor.execute("""
+        SELECT * FROM bill_reminders
+        WHERE bill_id = ? AND user_id = ?
+    """, bill_id, user_id)
+    bill = cursor.fetchone()
+    conn.close()
+
+    return render_template("edit_bill.html", bill=bill)
+
+## ------------ delete bill remainder------------
+@app.route("/delete_bill/<int:bill_id>")
+@login_required
+def delete_bill(bill_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        DELETE FROM bill_reminders
+        WHERE bill_id = ? AND user_id = ?
+    """, bill_id, user_id)
+    conn.commit()
+    conn.close()
+    return redirect("/bills")
+
+##-----------helper for notification-----------
+def notify_upcoming_bills(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    today = datetime.today().date()
+    deadline = today + timedelta(days=3)
+
+    # Fetch pending bills due within 3 days
+    cursor.execute("""
+        SELECT bill_id, bill_name, due_date FROM bill_reminders
+        WHERE user_id = ? AND status = 'pending' AND due_date BETWEEN ? AND ?
+    """, user_id, today, deadline)
+    bills = cursor.fetchall()
+
+    for b in bills:
+        # Check if notification already exists
+        cursor.execute("""
+            SELECT 1 FROM notifications
+            WHERE user_id = ? AND related_entity_type = 'bill' AND related_entity_id = ?
+        """, user_id, b.bill_id)
+        exists = cursor.fetchone()
+
+        if not exists:
+            msg = f"Bill '{b.bill_name}' is due on {b.due_date}"
+            cursor.execute("""
+                INSERT INTO notifications
+                (user_id, notification_type, message, related_entity_type, related_entity_id)
+                VALUES (?, 'bill_reminder', ?, 'bill', ?)
+            """, user_id, msg, b.bill_id)
+
+    conn.commit()
+    conn.close()
+
+
+##-------- Notification Center Module--------------
+##--------------------------------------------------
+
+## ------Notifications--------------------------
+@app.route("/notifications")
+@login_required
+def notifications():
+    user_id = session["user_id"]
+    notif_type = request.args.get("type")  # Optional filter
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if notif_type:
+        cursor.execute("""
+            SELECT * FROM notifications
+            WHERE user_id = ? AND notification_type = ?
+            ORDER BY created_at DESC
+        """, user_id, notif_type)
+    else:
+        cursor.execute("""
+            SELECT * FROM notifications
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+        """, user_id)
+
+    notifications = cursor.fetchall()
+    conn.close()
+
+    return render_template("notifications.html", notifications=notifications, selected_type=notif_type)
+
+## ------------------Mark notification as read---------------
+@app.route("/mark_notification_read/<int:notification_id>")
+@login_required
+def mark_notification_read(notification_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE notifications
+        SET is_read = 1
+        WHERE notification_id = ? AND user_id = ?
+    """, notification_id, user_id)
+    conn.commit()
+    conn.close()
+    return redirect("/notifications")
+
+##-------Delete notification----------------
+@app.route("/delete_notification/<int:notification_id>")
+@login_required
+def delete_notification(notification_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        DELETE FROM notifications
+        WHERE notification_id = ? AND user_id = ?
+    """, notification_id, user_id)
+    conn.commit()
+    conn.close()
+    return redirect("/notifications")
+
+## ------------ Dashboard Module----------------   ----------------------
+##-------------------------------------------------------------------
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    user_id = session["user_id"]
+    today = datetime.today()
+    month_start = today.replace(day=1)
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Total account balance
+    cursor.execute("""
+        SELECT SUM(current_balance) AS total_balance
+        FROM user_accounts
+        WHERE user_id = ?
+    """, user_id)
+    total_balance = cursor.fetchone().total_balance or 0
+
+    # Total income this month
+    cursor.execute("""
+        SELECT SUM(amount) AS total_income
+        FROM transactions
+        WHERE user_id = ? AND transaction_type = 'income' AND transaction_date >= ?
+    """, user_id, month_start)
+    total_income = cursor.fetchone().total_income or 0
+
+    # Total expenses this month
+    cursor.execute("""
+        SELECT SUM(amount) AS total_expenses
+        FROM transactions
+        WHERE user_id = ? AND transaction_type = 'expense' AND transaction_date >= ?
+    """, user_id, month_start)
+    total_expenses = cursor.fetchone().total_expenses or 0
+
+    # Overall savings goal progress (avg % complete)
+    cursor.execute("""
+        SELECT AVG(CAST(current_amount AS FLOAT) / NULLIF(target_amount, 0)) * 100 AS avg_progress
+        FROM savings_goals
+        WHERE user_id = ?
+    """, user_id)
+    savings_progress = cursor.fetchone().avg_progress or 0
+
+    # Expense by category for pie chart (this month)
+    cursor.execute("""
+        SELECT c.category_name, SUM(t.amount) AS total
+        FROM transactions t
+        JOIN categories c ON t.category_id = c.category_id
+        WHERE t.user_id = ? AND t.transaction_type = 'expense' AND t.transaction_date >= ?
+        GROUP BY c.category_name
+    """, user_id, month_start)
+    category_spending = cursor.fetchall()
+    chart_labels = [row.category_name for row in category_spending]
+    chart_values = [float(row.total) for row in category_spending]
+
+    # Upcoming unpaid bills (top 5)
+    cursor.execute("""
+        SELECT * FROM bill_reminders
+        WHERE user_id = ? AND status = 'pending'
+        ORDER BY due_date ASC
+        OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY
+    """, user_id)
+    upcoming_bills = cursor.fetchall()
+
+    # Next due recurring transactions (top 3)
+    cursor.execute("""
+        SELECT * FROM recurring_transactions
+        WHERE user_id = ? AND is_active = 1
+        ORDER BY last_generated_date NULLS FIRST, start_date ASC
+        OFFSET 0 ROWS FETCH NEXT 3 ROWS ONLY
+    """, user_id)
+    recurring = cursor.fetchall()
+
+    # Unread notifications (top 3)
+    cursor.execute("""
+        SELECT * FROM notifications
+        WHERE user_id = ? AND is_read = 0
+        ORDER BY created_at DESC
+        OFFSET 0 ROWS FETCH NEXT 3 ROWS ONLY
+    """, user_id)
+    notifications = cursor.fetchall()
+
+    conn.close()
+
+    return render_template("dashboard.html",
+        total_balance=total_balance,
+        total_income=total_income,
+        total_expenses=total_expenses,
+        savings_progress=savings_progress,
+        chart_labels=chart_labels,
+        chart_values=chart_values,
+        upcoming_bills=upcoming_bills,
+        recurring=recurring,
+        notifications=notifications
+    )
+
+

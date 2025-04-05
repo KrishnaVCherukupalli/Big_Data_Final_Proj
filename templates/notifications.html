@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notifications</title>
+</head>
+<body>
+    <h1>Notifications Center</h1>
+
+    <!-- Filter by Type -->
+    <form method="get" action="/notifications">
+        <label>Filter by type:</label>
+        <select name="type" onchange="this.form.submit()">
+            <option value="">-- All --</option>
+            <option value="bill_reminder" {% if selected_type= ='bill_reminder' %}selected{% endif %}>Bill Reminder</option>
+            <option value="budget_alert" {% if selected_type= ='budget_alert' %}selected{% endif %}>Budget Alert</option>
+            <option value="low_balance" {% if selected_type= ='low_balance' %}selected{% endif %}>Low Balance</option>
+            <option value="subscription_renewal" {% if selected_type= ='subscription_renewal' %}selected{% endif %}>Subscription</option>
+            <option value="debt_reminder" {% if selected_type= ='debt_reminder' %}selected{% endif %}>Debt Reminder</option>
+            <option value="goal_reached" {% if selected_type= ='goal_reached' %}selected{% endif %}>Savings Goal</option>
+            <option value="system" {% if selected_type= ='system' %}selected{% endif %}>System</option>
+        </select>
+    </form>
+
+    <br><hr>
+
+    <!-- Notifications Table -->
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Message</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for n in notifications %}
+            <tr>
+                <td>{{ n.message }}</td>
+                <td>{{ n.notification_type.replace('_', ' ')|title }}</td>
+                <td style="color: {% if n.is_read %}green{% else %}red{% endif %};">
+                    {% if n.is_read %}Read{% else %}Unread{% endif %}
+                </td>
+                <td>{{ n.created_at }}</td>
+                <td>
+                    {% if not n.is_read %}
+                    <a href="/mark_notification_read/{{ n.notification_id }}">Mark as Read</a><br>
+                    {% endif %}
+                    <a href="/delete_notification/{{ n.notification_id }}" onclick="return confirm('Delete this notification?');">Delete</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">No notifications found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+    <a href="/transactions">Back to Dashboard</a>
+</body>
+</html>

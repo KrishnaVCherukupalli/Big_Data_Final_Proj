@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bill Reminders</title>
+</head>
+<body>
+    <h1>Bill Reminders</h1>
+
+    <form method="post">
+        <label>Bill Name:</label>
+        <input type="text" name="bill_name" required><br><br>
+
+        <label>Amount:</label>
+        <input type="number" name="amount" step="0.01" required><br><br>
+
+        <label>Due Date:</label>
+        <input type="date" name="due_date" required><br><br>
+
+        <button type="submit">Add Reminder</button>
+    </form>
+
+    <hr>
+
+    <h2>My Upcoming Bills</h2>
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Amount</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bill in bills %}
+            <tr>
+                <td>{{ bill.bill_name }}</td>
+                <td>${{ "%.2f"|format(bill.amount) }}</td>
+                <td>{{ bill.due_date }}</td>
+                <td style="color: {% if bill.status == 'paid' %}green{% else %}red{% endif %};">
+                    {{ bill.status|capitalize }}
+                </td>
+                <td>
+                    {% if bill.status == 'pending' %}
+                    <a href="/mark_bill_paid/{{ bill.bill_id }}">Mark Paid</a><br>
+                    {% endif %}
+                    <a href="/edit_bill/{{ bill.bill_id }}">Edit</a><br>
+                    <a href="/delete_bill/{{ bill.bill_id }}" onclick="return confirm('Delete this bill?')">Delete</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">No bills added yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br><a href="/transactions">Back to Dashboard</a>
+</body>
+</html>

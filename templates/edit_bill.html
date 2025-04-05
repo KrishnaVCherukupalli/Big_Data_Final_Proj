@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Bill Reminder</title>
+</head>
+<body>
+    <h1>Edit Bill</h1>
+    <form method="post">
+        <label>Bill Name:</label>
+        <input type="text" name="bill_name" value="{{ bill.bill_name }}" required><br><br>
+
+        <label>Amount:</label>
+        <input type="number" name="amount" value="{{ bill.amount }}" step="0.01" required><br><br>
+
+        <label>Due Date:</label>
+        <input type="date" name="due_date" value="{{ bill.due_date }}" required><br><br>
+
+        <label>Status:</label>
+        <select name="status">
+            <option value="pending" {% if bill.status= ='pending' %}selected{% endif %}>Pending</option>
+            <option value="paid" {% if bill.status= ='paid' %}selected{% endif %}>Paid</option>
+        </select><br><br>
+
+        <button type="submit">Update Bill</button>
+    </form>
+    <br>
+    <a href="/bills">Back to Bills</a>
+</body>
+</html>
