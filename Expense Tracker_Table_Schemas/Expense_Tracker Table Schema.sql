@@ -249,3 +249,24 @@ CREATE TABLE savings_history (
     FOREIGN KEY (goal_id) REFERENCES savings_goals(goal_id)
 );
 
+-- Recurring transactions table
+
+CREATE TABLE recurring_transactions (
+    recurring_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    category_id INT NOT NULL,
+    account_id INT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    transaction_type VARCHAR(10) CHECK (transaction_type IN ('income', 'expense')),
+    frequency VARCHAR(20) CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
+    start_date DATE NOT NULL,
+    end_date DATE NULL,
+    description VARCHAR(MAX),
+    last_generated_date DATE NULL,
+    is_active BIT DEFAULT 1,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (category_id) REFERENCES categories(category_id),
+    FOREIGN KEY (account_id) REFERENCES user_accounts(account_id)
+);
+
