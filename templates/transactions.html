@@ -4,7 +4,7 @@
     <title>My Transactions</title>
 </head>
 <body>
-    <h1>📊 My Transactions</h1>
+    <h1>My Transactions</h1>
 
     {% if alert %}
     <p style="color:red;">{{ alert }}</p>
@@ -33,7 +33,7 @@
     </form>
 
     <br>
-    <a href="/add_transaction">➕ Add New Transaction</a>
+    <a href="/add_transaction">Add New Transaction</a>
     <br><br>
 
     <table border="1" cellpadding="8" cellspacing="0">
@@ -75,5 +75,9 @@
             {% endfor %}
         </tbody>
     </table>
+    <form action="/generate_recurring">
+        <button type="submit">🔁 Generate Due Transactions</button>
+    </form>
+
 </body>
 </html>
