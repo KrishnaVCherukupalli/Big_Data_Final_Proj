@@ -272,3 +272,14 @@ CREATE TABLE recurring_transactions (
 
 
 ALTER TABLE transactions ADD is_recurring_generated BIT DEFAULT 0;
+
+CREATE TABLE bill_reminders (
+    bill_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    bill_name VARCHAR(100) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    due_date DATE NOT NULL,
+    status VARCHAR(10) DEFAULT 'pending' CHECK (status IN ('pending', 'paid')), 
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
