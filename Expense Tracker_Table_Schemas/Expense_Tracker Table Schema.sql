@@ -270,3 +270,5 @@ CREATE TABLE recurring_transactions (
     FOREIGN KEY (account_id) REFERENCES user_accounts(account_id)
 );
 
+
+ALTER TABLE transactions ADD is_recurring_generated BIT DEFAULT 0;
