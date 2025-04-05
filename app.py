@@ -742,3 +742,51 @@ def generate_recurring():
 
     session["alert"] = f"{generated_count} transaction(s) generated."
     return redirect("/transactions")
+
+##------Edit recurring transactions-----------
+
+@app.route("/edit_recurring/<int:recurring_id>", methods=["GET", "POST"])
+@login_required
+def edit_recurring(recurring_id):
+    user_id = session["user_id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        category_id = int(request.form.get("category_id"))
+        transaction_type = request.form.get("transaction_type")
+        amount = float(request.form.get("amount"))
+        frequency = request.form.get("frequency")
+        start_date = request.form.get("start_date")
+        end_date = request.form.get("end_date") or None
+        description = request.form.get("description")
+        account_id = request.form.get("account_id") or None
+        is_active = int(request.form.get("is_active"))
+
+        cursor.execute("""
+            UPDATE recurring_transactions
+            SET category_id = ?, transaction_type = ?, amount = ?, frequency = ?,
+                start_date = ?, end_date = ?, description = ?, account_id = ?, is_active = ?
+            WHERE recurring_id = ? AND user_id = ?
+        """, category_id, transaction_type, amount, frequency, start_date,
+             end_date, description, account_id, is_active, recurring_id, user_id)
+        conn.commit()
+        conn.close()
+        return redirect("/recurring")
+
+    # Fetch existing recurring txn
+    cursor.execute("""
+        SELECT * FROM recurring_transactions
+        WHERE recurring_id = ? AND user_id = ?
+    """, recurring_id, user_id)
+    r = cursor.fetchone()
+
+    # Fetch dropdowns
+    cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
+    categories = cursor.fetchall()
+    cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ?", user_id)
+    accounts = cursor.fetchall()
+    conn.close()
+
+    return render_template("edit_recurring.html", r=r, categories=categories, accounts=accounts)
+
