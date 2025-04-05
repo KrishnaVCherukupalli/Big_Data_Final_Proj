@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head><title>Edit Recurring</title></head>
+<body>
+    <h1>Edit Recurring Transaction</h1>
+    <form method="post">
+        <label>Category:</label>
+        <select name="category_id" required>
+            {% for c in categories %}
+            <option value="{{ c.category_id }}" {% if c.category_id == r.category_id %}selected{% endif %}>{{ c.category_name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label>Type:</label>
+        <select name="transaction_type">
+            <option value="income" {% if r.transaction_type == 'income' %}selected{% endif %}>Income</option>
+            <option value="expense" {% if r.transaction_type == 'expense' %}selected{% endif %}>Expense</option>
+        </select><br><br>
+
+        <label>Amount:</label>
+        <input type="number" name="amount" value="{{ r.amount }}" step="0.01" required><br><br>
+
+        <label>Frequency:</label>
+        <select name="frequency">
+            <option value="daily" {% if r.frequency == 'daily' %}selected{% endif %}>Daily</option>
+            <option value="weekly" {% if r.frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+            <option value="monthly" {% if r.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+            <option value="yearly" {% if r.frequency == 'yearly' %}selected{% endif %}>Yearly</option>
+        </select><br><br>
+
+        <label>Start Date:</label>
+        <input type="date" name="start_date" value="{{ r.start_date }}" required><br><br>
+
+        <label>End Date (optional):</label>
+        <input type="date" name="end_date" value="{{ r.end_date or '' }}"><br><br>
+
+        <label>Description:</label>
+        <input type="text" name="description" value="{{ r.description }}"><br><br>
+
+        <label>Account (optional):</label>
+        <select name="account_id">
+            <option value="">-- None --</option>
+            {% for a in accounts %}
+            <option value="{{ a.account_id }}" {% if a.account_id == r.account_id %}selected{% endif %}>{{ a.account_name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label>Status:</label>
+        <select name="is_active">
+            <option value="1" {% if r.is_active %}selected{% endif %}>Active</option>
+            <option value="0" {% if not r.is_active %}selected{% endif %}>Paused</option>
+        </select><br><br>
+
+        <button type="submit">Update</button>
+    </form>
+
+    <br>
+    <a href="/recurring">Back to Recurring</a>
+</body>
+</html>

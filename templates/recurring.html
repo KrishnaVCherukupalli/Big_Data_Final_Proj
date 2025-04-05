@@ -67,6 +67,7 @@
                 <th>Last Generated</th>
                 <th>Next Due</th>
                 <th>Status</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -76,8 +77,9 @@
                 <td>${{ "%.2f"|format(r.amount) }}</td>
                 <td>{{ r.transaction_type }}</td>
                 <td>{{ r.frequency }}</td>
-                <td>{{ r.start_date }}</td>
-                <td>{{ r.last_generated_date or 'Never' }}</td>
+                <td>{{ r.start_date|safe }}</td>
+                <td>{{ r.last_generated_date|default("Never")|safe }}</td>
+                <td>{{ r.next_due }}</td>
                 <td>
                     {% set last = r.last_generated_date or r.start_date %}
                     {% set next_due = last %}
@@ -93,9 +95,12 @@
                     {{ next_due }}
                 </td>
                 <td>{{ "Active" if r.is_active else "Inactive" }}</td>
+                <td>
+                    <a href="/edit_recurring/{{ r.recurring_id }}">Edit</a>
+                </td>
             </tr>
             {% else %}
-            <tr><td colspan="8">No recurring transactions added yet.</td></tr>
+            <tr><td colspan="9">No recurring transactions added yet.</td></tr>
             {% endfor %}
         </tbody>
     </table>
