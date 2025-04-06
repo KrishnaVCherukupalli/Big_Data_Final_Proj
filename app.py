@@ -30,8 +30,8 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 def get_connection():
     return pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=localhost\\SQLEXPRESS;'  # change as needed
+        'DRIVER={SQL Server};'
+        'SERVER=PHANI\\PKM01;'  # change as needed
         'DATABASE=Expense_Tracker;'
         'Trusted_Connection=yes;'
     )
@@ -84,7 +84,7 @@ def register():
                 return render_template("welcome.html", alert="Email already exists.")
 
             cursor.execute(
-                "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+                "INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)",
                 name, email, hashed_pw
             )
         return redirect("/login")
@@ -205,7 +205,7 @@ def add_transaction():
                     if total_spent > budget.budget_amount:
                         session["alert"] = f"Budget exceeded for this category!"
 
-        return redirect("/transactions")
+    return redirect("/transactions")
 
     categories, accounts = get_user_categories_and_accounts(user_id)
     return render_template("add_transaction.html", categories=categories, accounts=accounts)

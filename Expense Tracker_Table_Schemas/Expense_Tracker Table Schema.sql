@@ -1,12 +1,25 @@
+Use master
+go
+
+Use Expense_Tracker
+Go
+
 drop table if exists user_sessions;
 drop table if exists budgets;
-drop table if exists savings_goals;
 drop table if exists subscriptions;
 drop table if exists debts;
 drop table if exists bill_reminders;
+drop table if exists savings_history;
+drop table if exists system_announcements;
+drop table if exists error_logs;
+drop table if exists user_activity_log;
+drop table if exists notifications;
+drop table if exists shared_expenses;
+drop table if exists recurring_transactions;
+drop table if exists savings_goals;
+drop table if exists transactions;
 drop table if exists user_accounts;
 drop table if exists categories;
-drop table if exists transactions;
 Drop table if exists users;
 --dropping all tables
 
@@ -110,6 +123,16 @@ CREATE TABLE savings_goals (
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
+-- Savings history table
+CREATE TABLE savings_history (
+    history_id INT IDENTITY(1,1) PRIMARY KEY,
+    goal_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    contribution_date DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (goal_id) REFERENCES savings_goals(goal_id)
+);
+
 
 --Subscriptions table
 
@@ -231,13 +254,4 @@ CREATE TABLE system_announcements (
     visible_from DATETIME,
     visible_to DATETIME,
     created_at DATETIME DEFAULT GETDATE()
-);
-
--- Savings history table
-CREATE TABLE savings_history (
-    history_id INT IDENTITY(1,1) PRIMARY KEY,
-    goal_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    contribution_date DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (goal_id) REFERENCES savings_goals(goal_id)
 );
