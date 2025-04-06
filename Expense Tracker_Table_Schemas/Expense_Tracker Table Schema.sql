@@ -56,12 +56,43 @@ CREATE TABLE categories (
     category_id INT IDENTITY(1,1) PRIMARY KEY,
     category_name VARCHAR(50) NOT NULL UNIQUE,
     category_type VARCHAR(10) NOT NULL CHECK (category_type IN ('income', 'expense')), 
-    user_id INT NOT NULL,
-    icon VARCHAR(50),
-    color VARCHAR(20),
+    user_id INT NULL,
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+CREATE UNIQUE INDEX uq_user_category ON categories(user_id, category_name);
+
+-- Default Expense Categories
+INSERT INTO categories (category_name, category_type, user_id) VALUES
+    ('Groceries', 'expense', NULL),
+    ('Rent', 'expense', NULL),
+    ('Utilities', 'expense', NULL),
+    ('Transportation', 'expense', NULL),
+    ('Internet', 'expense', NULL),
+    ('Mobile Phone', 'expense', NULL),
+    ('Fuel', 'expense', NULL),
+    ('Dining Out', 'expense', NULL),
+    ('Entertainment', 'expense', NULL),
+    ('Health & Fitness', 'expense', NULL),
+    ('Insurance', 'expense', NULL),
+    ('Clothing', 'expense', NULL),
+    ('Gifts & Donations', 'expense', NULL),
+    ('Education', 'expense', NULL),
+    ('Childcare', 'expense', NULL),
+    ('Household Supplies', 'expense', NULL),
+    ('Personal Care', 'expense', NULL),
+    ('Travel', 'expense', NULL),
+    ('Subscriptions', 'expense', NULL),
+    ('Miscellaneous', 'expense', NULL),
+    ('Salary', 'income', NULL),
+    ('Bonus', 'income', NULL),
+    ('Freelancing', 'income', NULL),
+    ('Interest Income', 'income', NULL),
+    ('Dividends', 'income', NULL),
+    ('Rental Income', 'income', NULL),
+    ('Refunds/Reimbursements', 'income', NULL),
+    ('Other Income', 'income', NULL);
 
 
 CREATE TABLE user_accounts (
