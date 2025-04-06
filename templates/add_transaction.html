@@ -1,70 +1,66 @@
-﻿<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Transaction</title>
-</head>
-<body>
-    <h1>Add Transaction</h1>
+﻿{% extends "layout.html" %}
+{% block title %}Add Transaction{% endblock %}
 
-    <form method="post" enctype="multipart/form-data">
-        <label>Type:</label>
-        <select name="transaction_type" id="transaction_type" required onchange="filterCategories()">
-            <option value="">Select Type</option>
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
-        </select><br><br>
+{% block content %}
+<h1>➕ Add Transaction</h1>
 
-        <label>Category:</label>
-        <select name="category_id" id="category_id" required>
-            <option value="">-- Select Category --</option>
-            {% for c in categories %}
-            <option value="{{ c.category_id }}" data-type="{{ c.category_type }}">{{ c.category_name }}</option>
-            {% endfor %}
-        </select><br><br>
+<form method="post" enctype="multipart/form-data">
+    <label>Type:</label>
+    <select name="transaction_type" id="transaction_type" required onchange="filterCategories()">
+        <option value="">Select Type</option>
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+    </select><br><br>
 
-        <script>
-            function filterCategories() {
-                const selectedType = document.getElementById("transaction_type").value;
-                const categorySelect = document.getElementById("category_id");
-                const options = categorySelect.options;
+    <label>Category:</label>
+    <select name="category_id" id="category_id" required>
+        <option value="">-- Select Category --</option>
+        {% for c in categories %}
+        <option value="{{ c.category_id }}" data-type="{{ c.category_type }}">{{ c.category_name }}</option>
+        {% endfor %}
+    </select><br><br>
 
-                for (let i = 0; i < options.length; i++) {
-                    const type = options[i].getAttribute("data-type");
-                    if (!type || selectedType === "") {
-                        options[i].style.display = ""; // show everything if nothing selected
-                    } else {
-                        options[i].style.display = (type === selectedType) ? "" : "none";
-                    }
-                }
+    <label>Amount:</label>
+    <input type="number" name="amount" step="0.01" required><br><br>
 
-                // Reset category selection if type is changed
-                categorySelect.value = "";
+    <label>Date:</label>
+    <input type="date" name="transaction_date" required><br><br>
+
+    <label>Description:</label>
+    <input type="text" name="description"><br><br>
+
+    <label>Receipt Upload (PNG/JPG/PDF):</label>
+    <input type="file" name="receipt_file"><br><br>
+
+    <label>Account (optional):</label>
+    <select name="account_id">
+        <option value="">-- None --</option>
+        {% for acc in accounts %}
+        <option value="{{ acc.account_id }}">{{ acc.account_name }}</option>
+        {% endfor %}
+    </select><br><br>
+
+    <button type="submit">💾 Save Transaction</button>
+</form>
+<br>
+<a href="/transactions">← Back to Transactions</a>
+
+<script>
+    function filterCategories() {
+        const selectedType = document.getElementById("transaction_type").value;
+        const categorySelect = document.getElementById("category_id");
+        const options = categorySelect.options;
+
+        for (let i = 0; i < options.length; i++) {
+            const type = options[i].getAttribute("data-type");
+            if (!type || selectedType === "") {
+                options[i].style.display = "";
+            } else {
+                options[i].style.display = (type === selectedType) ? "" : "none";
             }
-        </script>
+        }
 
-        <label>Amount:</label>
-        <input type="number" name="amount" step="0.01" required><br><br>
-
-        <label>Date:</label>
-        <input type="date" name="transaction_date" required><br><br>
-
-        <label>Description:</label>
-        <input type="text" name="description"><br><br>
-
-        <label>Receipt Upload (PNG/JPG/PDF):</label>
-        <input type="file" name="receipt_file"><br><br>
-
-        <label>Account (optional):</label>
-        <select name="account_id">
-            <option value="">-- None --</option>
-            {% for acc in accounts %}
-            <option value="{{ acc.account_id }}">{{ acc.account_name }}</option>
-            {% endfor %}
-        </select><br><br>
-
-        <button type="submit">Save Transaction</button>
-    </form>
-    <br>
-    <a href="/transactions">Back to Transactions</a>
-</body>
-</html>
+        categorySelect.value = "";
+    }
+</script>
+{% endblock %}
