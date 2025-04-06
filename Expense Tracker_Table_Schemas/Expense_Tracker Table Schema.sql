@@ -1,12 +1,13 @@
-Drop table if exists users;
 drop table if exists user_sessions;
-drop table if exists categories;
-drop table if exists transactions;
 drop table if exists budgets;
 drop table if exists savings_goals;
 drop table if exists subscriptions;
 drop table if exists debts;
 drop table if exists bill_reminders;
+drop table if exists user_accounts;
+drop table if exists categories;
+drop table if exists transactions;
+Drop table if exists users;
 --dropping all tables
 
 
@@ -77,7 +78,7 @@ CREATE TABLE transactions (
     is_recurring_generated BIT DEFAULT 0,
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (category_id) REFERENCES categories(category_id)
+    FOREIGN KEY (category_id) REFERENCES categories(category_id),
     FOREIGN KEY (account_id) REFERENCES user_accounts(account_id)
 );
 
@@ -109,16 +110,6 @@ CREATE TABLE savings_goals (
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
-
--- Savings history table
-CREATE TABLE savings_history (
-    history_id INT IDENTITY(1,1) PRIMARY KEY,
-    goal_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    contribution_date DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (goal_id) REFERENCES savings_goals(goal_id)
-);
-
 
 --Subscriptions table
 
