@@ -14,7 +14,7 @@ from db import with_connection
 from helpers import login_required
 
 ## -------------Flask configuration ----------------
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 app.secret_key = "super-secret-key"
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
@@ -351,7 +351,7 @@ def budgets():
 
 
         # Get categories
-        cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
+        cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ? OR user_id IS NULL", user_id)
         categories = cursor.fetchall()
 
     return render_template("budgets.html", budgets=budgets, categories=categories, available_months=available_months)
@@ -615,7 +615,7 @@ def recurring():
         recurs = cursor.fetchall()
 
         # Fetch category/account options
-        cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
+        cursor.execute("SELECT category_id, category_name, category_type FROM categories WHERE user_id = ? OR user_id IS NULL", user_id)
         categories = cursor.fetchall()
 
         cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ?", user_id)
@@ -737,6 +737,8 @@ def bills():
             bill_name = request.form.get("bill_name")
             amount = float(request.form.get("amount"))
             due_date = request.form.get("due_date")
+            if due_date:
+                due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
 
             cursor.execute("""
                 INSERT INTO bill_reminders (user_id, bill_name, amount, due_date)
@@ -811,12 +813,14 @@ def notify_upcoming_bills(user_id):
 
         today = datetime.today().date()
         deadline = today + timedelta(days=3)
+        today_str = today.strftime("%Y-%m-%d")
+        deadline_str = deadline.strftime("%Y-%m-%d")
 
         # Fetch pending bills due within 3 days
         cursor.execute("""
             SELECT bill_id, bill_name, due_date FROM bill_reminders
             WHERE user_id = ? AND status = 'pending' AND due_date BETWEEN ? AND ?
-        """, user_id, today, deadline)
+        """, user_id, today_str, deadline_str)
         bills = cursor.fetchall()
 
         for b in bills:
@@ -947,31 +951,29 @@ def dashboard():
 
         # Upcoming unpaid bills (top 5)
         cursor.execute("""
-            SELECT * FROM bill_reminders
+            SELECT TOP 5 * FROM bill_reminders
             WHERE user_id = ? AND status = 'pending'
             ORDER BY due_date ASC
-            OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY
         """, user_id)
         upcoming_bills = cursor.fetchall()
 
-        # Next due recurring transactions (top 3)
+        # Next due recurring transactions (top 3) - Nulls First
         cursor.execute("""
-            SELECT * FROM recurring_transactions
+            SELECT TOP 3 * FROM recurring_transactions
             WHERE user_id = ? AND is_active = 1
-            ORDER BY last_generated_date NULLS FIRST, start_date ASC
-            OFFSET 0 ROWS FETCH NEXT 3 ROWS ONLY
+            ORDER BY 
+                CASE WHEN last_generated_date IS NULL THEN 0 ELSE 1 END,
+                start_date ASC
         """, user_id)
         recurring = cursor.fetchall()
 
         # Unread notifications (top 3)
         cursor.execute("""
-            SELECT * FROM notifications
+            SELECT TOP 3 * FROM notifications
             WHERE user_id = ? AND is_read = 0
             ORDER BY created_at DESC
-            OFFSET 0 ROWS FETCH NEXT 3 ROWS ONLY
         """, user_id)
         notifications = cursor.fetchall()
-
 
     return render_template("dashboard.html",
         total_balance=total_balance,
@@ -984,6 +986,7 @@ def dashboard():
         recurring=recurring,
         notifications=notifications
     )
+
 
 if __name__ == "__main__":
     app.run(debug=True)

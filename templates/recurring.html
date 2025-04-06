@@ -1,110 +1,113 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Recurring Transactions</title>
-</head>
-<body>
-    <h1>Recurring Transactions</h1>
+﻿{% extends "layout.html" %}
 
-    <!-- Add Recurring Form -->
-    <form method="post">
-        <label>Category:</label>
-        <select name="category_id" required>
-            {% for c in categories %}
-            <option value="{{ c.category_id }}">{{ c.category_name }}</option>
-            {% endfor %}
-        </select><br><br>
+{% block title %}Recurring Transactions - Expense Tracker{% endblock %}
 
-        <label>Type:</label>
-        <select name="transaction_type">
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
-        </select><br><br>
+{% block content %}
+<h1>🔁 Recurring Transactions</h1>
 
-        <label>Amount:</label>
-        <input type="number" name="amount" step="0.01" required><br><br>
+<h2>Add Recurring Transaction</h2>
+<form method="post">
 
-        <label>Frequency:</label>
-        <select name="frequency" required>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-        </select><br><br>
+    <label>Type:</label>
+    <select name="transaction_type" id="transaction_type" required onchange="filterCategories()">
+        <option value="">Select Type</option>
+        <option value="income" {% if request.form.get('transaction_type')=='income' %}selected{% endif %}>Income</option>
+        <option value="expense" {% if request.form.get('transaction_type')=='expense' %}selected{% endif %}>Expense</option>
+    </select>
+    <br><br>
 
-        <label>Start Date:</label>
-        <input type="date" name="start_date" required><br><br>
+    <label>Category:</label>
+    <select name="category_id" id="category_id" required>
+        <option value="">-- Select Category --</option>
+        {% for c in categories %}
+        <option value="{{ c.category_id }}" data-type="{{ c.category_type }}">{{ c.category_name }}</option>
+        {% endfor %}
+    </select><br><br>
 
-        <label>End Date (optional):</label>
-        <input type="date" name="end_date"><br><br>
+    <label>Amount:</label>
+    <input type="number" name="amount" step="0.01" required><br><br>
 
-        <label>Description:</label>
-        <input type="text" name="description"><br><br>
+    <label>Frequency:</label>
+    <select name="frequency" required>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+    </select><br><br>
 
-        <label>Account (optional):</label>
-        <select name="account_id">
-            <option value="">-- None --</option>
-            {% for a in accounts %}
-            <option value="{{ a.account_id }}">{{ a.account_name }}</option>
-            {% endfor %}
-        </select><br><br>
+    <label>Start Date:</label>
+    <input type="date" name="start_date" required><br><br>
 
-        <button type="submit">Add Recurring</button>
-    </form>
+    <label>End Date (optional):</label>
+    <input type="date" name="end_date"><br><br>
 
-    <hr>
+    <label>Description:</label>
+    <input type="text" name="description"><br><br>
 
-    <!-- View Existing -->
-    <h2>Active Recurring Transactions</h2>
-    <table border="1" cellpadding="8">
-        <thead>
-            <tr>
-                <th>Category</th>
-                <th>Amount</th>
-                <th>Type</th>
-                <th>Frequency</th>
-                <th>Start</th>
-                <th>Last Generated</th>
-                <th>Next Due</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for r in recurs %}
-            <tr>
-                <td>{{ r.category_name }}</td>
-                <td>${{ "%.2f"|format(r.amount) }}</td>
-                <td>{{ r.transaction_type }}</td>
-                <td>{{ r.frequency }}</td>
-                <td>{{ r.start_date|safe }}</td>
-                <td>{{ r.last_generated_date|default("Never")|safe }}</td>
-                <td>{{ r.next_due }}</td>
-                <td>
-                    {% set last = r.last_generated_date or r.start_date %}
-                    {% set next_due = last %}
-                    {% if r.frequency == 'daily' %}
-                    {% set next_due = (last | todatetime).date() + timedelta(days=1) %}
-                    {% elif r.frequency == 'weekly' %}
-                    {% set next_due = (last | todatetime).date() + timedelta(days=7) %}
-                    {% elif r.frequency == 'monthly' %}
-                    {% set next_due = (last | todatetime).replace(day=1).date().replace(month=(last | todatetime).month + 1) %}
-                    {% elif r.frequency == 'yearly' %}
-                    {% set next_due = (last | todatetime).replace(year=(last | todatetime).year + 1).date() %}
-                    {% endif %}
-                    {{ next_due }}
-                </td>
-                <td>{{ "Active" if r.is_active else "Inactive" }}</td>
-                <td>
-                    <a href="/edit_recurring/{{ r.recurring_id }}">Edit</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="9">No recurring transactions added yet.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <label>Account (optional):</label>
+    <select name="account_id">
+        <option value="">-- None --</option>
+        {% for a in accounts %}
+        <option value="{{ a.account_id }}">{{ a.account_name }}</option>
+        {% endfor %}
+    </select><br><br>
 
-    <br><a href="/transactions">Back to Dashboard</a>
-</body>
-</html>
+    <button type="submit">➕ Add Recurring</button>
+</form>
+
+<hr>
+
+<h2>⏰ Active Recurring Transactions</h2>
+<table border="1" cellpadding="8">
+    <thead>
+        <tr>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Type</th>
+            <th>Frequency</th>
+            <th>Start Date</th>
+            <th>Last Generated</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in recurs %}
+        <tr>
+            <td>{{ r.category_name }}</td>
+            <td>${{ "%.2f"|format(r.amount) }}</td>
+            <td>{{ r.transaction_type }}</td>
+            <td>{{ r.frequency }}</td>
+            <td>{{ r.start_date }}</td>
+            <td>{{ r.last_generated_date or 'Never' }}</td>
+            <td style="color: {{ 'green' if r.is_active else 'gray' }}">{{ "Active" if r.is_active else "Inactive" }}</td>
+            <td><a href="/edit_recurring/{{ r.recurring_id }}">✏️ Edit</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8">No recurring transactions added yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br><a href="/transactions">← Back to Transactions</a>
+    <script>
+        function filterCategories() {
+            const selectedType = document.getElementById("transaction_type").value;
+            const categorySelect = document.getElementById("category_id");
+            const options = categorySelect.options;
+
+            for (let i = 0; i < options.length; i++) {
+                const type = options[i].getAttribute("data-type");
+                if (!type || selectedType === "") {
+                    options[i].style.display = "";
+                } else {
+                    options[i].style.display = (type === selectedType) ? "" : "none";
+                }
+            }
+
+            categorySelect.value = "";
+        }
+
+        window.onload = filterCategories;
+    </script>
+{% endblock %}
