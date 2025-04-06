@@ -30,8 +30,8 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 def get_connection():
     return pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=localhost\\SQLEXPRESS;'  # change as needed
+        'DRIVER={SQL Server};'
+        'SERVER=PHANI\\PKM01;'  # change as needed
         'DATABASE=Expense_Tracker;'
         'Trusted_Connection=yes;'
     )
@@ -52,10 +52,10 @@ def allowed_file(filename):
 
 def get_user_categories_and_accounts(user_id):
     with get_cursor() as cursor:
-        cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
+        cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ? or user_id is NULL", user_id)
         categories = cursor.fetchall()
 
-        cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ?", user_id)
+        cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ? or user_id is NULL", user_id)
         accounts = cursor.fetchall()
     return categories, accounts
 
@@ -84,7 +84,7 @@ def register():
                 return render_template("welcome.html", alert="Email already exists.")
 
             cursor.execute(
-                "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+                "INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)",
                 name, email, hashed_pw
             )
         return redirect("/login")
@@ -160,9 +160,9 @@ def transactions():
 @login_required
 def add_transaction():
     user_id = session["user_id"]
-    with get_cursor() as cursor:
-
-        if request.method == "POST":
+    
+    if request.method == "POST":
+        with get_cursor() as cursor:
             category_id = int(request.form.get("category_id"))
             transaction_type = request.form.get("transaction_type")
             amount = float(request.form.get("amount"))
@@ -204,7 +204,6 @@ def add_transaction():
 
                     if total_spent > budget.budget_amount:
                         session["alert"] = f"Budget exceeded for this category!"
-
         return redirect("/transactions")
 
     categories, accounts = get_user_categories_and_accounts(user_id)

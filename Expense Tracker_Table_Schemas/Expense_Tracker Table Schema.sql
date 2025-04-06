@@ -1,12 +1,25 @@
+Use master
+go
+
+Use Expense_Tracker
+Go
+
 drop table if exists user_sessions;
 drop table if exists budgets;
-drop table if exists savings_goals;
 drop table if exists subscriptions;
 drop table if exists debts;
 drop table if exists bill_reminders;
+drop table if exists savings_history;
+drop table if exists system_announcements;
+drop table if exists error_logs;
+drop table if exists user_activity_log;
+drop table if exists notifications;
+drop table if exists shared_expenses;
+drop table if exists recurring_transactions;
+drop table if exists savings_goals;
+drop table if exists transactions;
 drop table if exists user_accounts;
 drop table if exists categories;
-drop table if exists transactions;
 Drop table if exists users;
 --dropping all tables
 
@@ -43,12 +56,43 @@ CREATE TABLE categories (
     category_id INT IDENTITY(1,1) PRIMARY KEY,
     category_name VARCHAR(50) NOT NULL UNIQUE,
     category_type VARCHAR(10) NOT NULL CHECK (category_type IN ('income', 'expense')), 
-    user_id INT NOT NULL,
-    icon VARCHAR(50),
-    color VARCHAR(20),
+    user_id INT NULL,
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+CREATE UNIQUE INDEX uq_user_category ON categories(user_id, category_name);
+
+-- Default Expense Categories
+INSERT INTO categories (category_name, category_type, user_id) VALUES
+    ('Groceries', 'expense', NULL),
+    ('Rent', 'expense', NULL),
+    ('Utilities', 'expense', NULL),
+    ('Transportation', 'expense', NULL),
+    ('Internet', 'expense', NULL),
+    ('Mobile Phone', 'expense', NULL),
+    ('Fuel', 'expense', NULL),
+    ('Dining Out', 'expense', NULL),
+    ('Entertainment', 'expense', NULL),
+    ('Health & Fitness', 'expense', NULL),
+    ('Insurance', 'expense', NULL),
+    ('Clothing', 'expense', NULL),
+    ('Gifts & Donations', 'expense', NULL),
+    ('Education', 'expense', NULL),
+    ('Childcare', 'expense', NULL),
+    ('Household Supplies', 'expense', NULL),
+    ('Personal Care', 'expense', NULL),
+    ('Travel', 'expense', NULL),
+    ('Subscriptions', 'expense', NULL),
+    ('Miscellaneous', 'expense', NULL),
+    ('Salary', 'income', NULL),
+    ('Bonus', 'income', NULL),
+    ('Freelancing', 'income', NULL),
+    ('Interest Income', 'income', NULL),
+    ('Dividends', 'income', NULL),
+    ('Rental Income', 'income', NULL),
+    ('Refunds/Reimbursements', 'income', NULL),
+    ('Other Income', 'income', NULL);
 
 
 CREATE TABLE user_accounts (
@@ -110,6 +154,16 @@ CREATE TABLE savings_goals (
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
+-- Savings history table
+CREATE TABLE savings_history (
+    history_id INT IDENTITY(1,1) PRIMARY KEY,
+    goal_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    contribution_date DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (goal_id) REFERENCES savings_goals(goal_id)
+);
+
 
 --Subscriptions table
 
@@ -231,13 +285,4 @@ CREATE TABLE system_announcements (
     visible_from DATETIME,
     visible_to DATETIME,
     created_at DATETIME DEFAULT GETDATE()
-);
-
--- Savings history table
-CREATE TABLE savings_history (
-    history_id INT IDENTITY(1,1) PRIMARY KEY,
-    goal_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    contribution_date DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (goal_id) REFERENCES savings_goals(goal_id)
 );
