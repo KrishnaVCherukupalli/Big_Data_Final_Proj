@@ -4,9 +4,10 @@
     <title>Edit Transaction</title>
 </head>
 <body>
-    <h1>✏️ Edit Transaction</h1>
+    <h1>Edit Transaction</h1>
 
     <form method="post">
+
         <label>Category:</label>
         <select name="category_id" required>
             {% for c in categories %}
@@ -47,6 +48,6 @@
         <button type="submit">Update Transaction</button>
     </form>
     <br>
-    <a href="/transactions">← Back to Transactions</a>
+    <a href="/transactions">Back to Transactions</a>
 </body>
 </html>

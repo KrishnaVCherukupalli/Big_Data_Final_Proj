@@ -46,18 +46,20 @@ def get_cursor():
     finally:
         conn.close()
 
+
 ## -----------Utilities------------------------
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_user_categories_and_accounts(user_id):
     with get_cursor() as cursor:
-        cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ? or user_id is NULL", user_id)
+        cursor.execute("SELECT category_id, category_name, category_type FROM categories WHERE user_id = ? OR user_id IS NULL", user_id)
         categories = cursor.fetchall()
 
-        cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ? or user_id is NULL", user_id)
+        cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ? OR user_id IS NULL", user_id)
         accounts = cursor.fetchall()
     return categories, accounts
+
 
 ##---------------Routes------------------
 
@@ -985,4 +987,3 @@ def dashboard():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
