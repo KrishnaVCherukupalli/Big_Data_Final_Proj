@@ -1,4 +1,4 @@
-import os
+﻿import os
 import io
 import csv
 import pyodbc
@@ -89,6 +89,7 @@ def register():
                 "INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)",
                 name, email, hashed_pw
             )
+        session["alert"] = "🎉 Registration successful! Please log in."
         return redirect("/login")
     return render_template("welcome.html")
 
@@ -197,8 +198,8 @@ def add_transaction():
             if account_id:
                 if transaction_type == "income":
                     cursor.execute("UPDATE user_accounts SET current_balance = current_balance + ? WHERE account_id = ?", amount, account_id)
-            else:
-                cursor.execute("UPDATE user_accounts SET current_balance = current_balance - ? WHERE account_id = ?", amount, account_id)
+                else:
+                    cursor.execute("UPDATE user_accounts SET current_balance = current_balance - ? WHERE account_id = ?", amount, account_id)
 
 
             # Budget Alert Check (if expense)
