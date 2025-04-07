@@ -959,12 +959,13 @@ def dashboard():
 
         # Next due recurring transactions (top 3) - Nulls First
         cursor.execute("""
-            SELECT TOP 3 * FROM recurring_transactions
-            WHERE user_id = ? AND is_active = 1
+            SELECT TOP 3 r.*, c.category_name FROM recurring_transactions r
+            JOIN categories c ON r.category_id = c.category_id
+            WHERE r.user_id = ? AND r.is_active = 1
             ORDER BY 
-                CASE WHEN last_generated_date IS NULL THEN 0 ELSE 1 END,
-                start_date ASC
-        """, user_id)
+            CASE WHEN r.last_generated_date IS NULL THEN 0 ELSE 1 END,
+            r.start_date ASC
+            """, user_id)
         recurring = cursor.fetchall()
 
         # Unread notifications (top 3)
