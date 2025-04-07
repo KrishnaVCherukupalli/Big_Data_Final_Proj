@@ -89,6 +89,12 @@ def register():
                 "INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)",
                 name, email, hashed_pw
             )
+
+            cursor.execute("""
+                INSERT INTO user_accounts (user_id, account_name, account_type, current_balance)
+                VALUES (?, 'Default Account', 'General', 0)
+            """, user_id)
+
         session["alert"] = "🎉 Registration successful! Please log in."
         return redirect("/login")
     return render_template("welcome.html")
