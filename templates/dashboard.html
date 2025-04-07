@@ -16,7 +16,9 @@
 <div class="chart-container">
     <h2>📂 Category-wise Expenses (This Month)</h2>
     {% if chart_labels %}
-    <canvas id="expenseChart" width="400" height="300"></canvas>
+    <div class="chart-wrapper">
+        <canvas id="expenseChart"></canvas>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const ctx = document.getElementById('expenseChart').getContext('2d');
@@ -182,5 +184,15 @@
             width: 100%;
         }
     }
+    .chart-wrapper {
+        max-width: 350px;
+        margin: 0 auto;
+    }
+
+    #expenseChart {
+        width: 100% !important;
+        height: auto !important;
+    }
+
 </style>
 {% endblock %}
