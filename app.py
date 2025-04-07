@@ -33,9 +33,10 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 def get_connection():
     return pyodbc.connect(
         'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=DESKTOP-FB8BVHB\PRSQL;'  # change as needed
+        'SERVER=100.100.42.84,1433;'  # change as needed
         'DATABASE=Expense_Tracker;'
-        'Trusted_Connection=yes;'
+        'UID=friend_user;'
+        'PWD=StrongPassword123!;'
     )
 
 @contextmanager
@@ -413,9 +414,11 @@ def export_transactions():
             line = f"{row[0]} | {row[1]} | {row[2]} | ${row[3]:.2f} | {row[4]}"
             pdf.cell(200, 10, line, ln=True)
         output = io.BytesIO()
-        pdf.output(output)
+        pdf_bytes = pdf.output(dest='S').encode('latin1')  # 'S' = return as string
+        output.write(pdf_bytes)
         output.seek(0)
         return send_file(output, mimetype='application/pdf', as_attachment=True, download_name="transactions.pdf")
+
 
 
 ##--------------Budget Module--------------
@@ -553,46 +556,66 @@ def budget_trends():
 
 ## ------- Move remaining budget to savings------------
 
-@app.route("/move_to_savings")
+@app.route("/move_to_savings", methods=["GET", "POST"])
 @login_required
 def move_to_savings():
     user_id = session["user_id"]
-    month = request.args.get("month")
+    month = request.args.get("month") or request.form.get("month")
+
     if not month:
         session["alert"] = "No month selected."
         return redirect("/budgets")
 
-    with get_cursor() as cursor:
-        budget_month = f"{month}-01"
+    budget_month = f"{month}-01"
 
+    if request.method == "POST":
+        with get_cursor() as cursor:
+            total_moved = 0
+            # Fetch relevant budget IDs for this user and month
+            cursor.execute("""
+                SELECT budget_id FROM budgets
+                WHERE user_id = ? AND budget_month = ?
+            """, user_id, budget_month)
+            budget_ids = [row.budget_id for row in cursor.fetchall()]
+
+            for bid in budget_ids:
+                field = f"move_{bid}"
+                move_amount = request.form.get(field)
+                if move_amount:
+                    try:
+                        amt = float(move_amount)
+                        if amt > 0:
+                            total_moved += amt
+                            cursor.execute("""
+                                UPDATE savings_goals
+                                SET current_amount = current_amount + ?
+                                WHERE user_id = ? AND target_date >= GETDATE()
+                            """, amt, user_id)
+                    except ValueError:
+                        continue  # ignore invalid input
+
+        session["alert"] = f"${total_moved:.2f} moved to savings for {month}."
+        return redirect("/budgets")
+
+    # GET method - show category breakdown
+    with get_cursor() as cursor:
         cursor.execute("""
-            SELECT b.category_id, b.budget_amount,
-                   (SELECT SUM(t.amount)
-                    FROM transactions t
-                    WHERE t.user_id = b.user_id AND t.category_id = b.category_id
-                    AND t.transaction_type = 'expense'
-                    AND FORMAT(t.transaction_date, 'yyyy-MM') = FORMAT(b.budget_month, 'yyyy-MM')
-                   ) AS total_spent
+            SELECT b.budget_id, c.category_name, b.budget_amount,
+                   ISNULL((
+                        SELECT SUM(t.amount)
+                        FROM transactions t
+                        WHERE t.user_id = b.user_id AND t.category_id = b.category_id
+                          AND t.transaction_type = 'expense'
+                          AND FORMAT(t.transaction_date, 'yyyy-MM') = FORMAT(b.budget_month, 'yyyy-MM')
+                   ), 0) AS total_spent
             FROM budgets b
+            JOIN categories c ON b.category_id = c.category_id
             WHERE b.user_id = ? AND b.budget_month = ?
         """, user_id, budget_month)
         rows = cursor.fetchall()
 
-        total_moved = 0
+    return render_template("move_to_savings.html", rows=rows, month=month)
 
-        for row in rows:
-            spent = row.total_spent or 0
-            remaining = row.budget_amount - spent
-            if remaining > 0:
-                total_moved += remaining
-                cursor.execute("""
-                    UPDATE savings_goals
-                    SET current_amount = current_amount + ?
-                    WHERE user_id = ? AND target_date >= GETDATE()
-                """, remaining, user_id)
-
-    session["alert"] = f"${total_moved:.2f} moved to savings for {month}."
-    return redirect("/budgets")
 
 ##----------------Savings Module-----------------
 ##---------------------------------------------
