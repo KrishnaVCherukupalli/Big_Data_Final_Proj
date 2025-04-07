@@ -303,7 +303,7 @@ def budgets():
             threshold = int(request.form.get("alert_threshold") or 90)
 
             # Format date to first of month
-            month_start = datetime.strptime(budget_month, "%Y-%m").replace(day=1).date()
+            month_start = datetime.strptime(budget_month, "%Y-%m").replace(day=1).strftime('%Y-%m-%d')
 
             # Check if budget exists
             cursor.execute("""
@@ -351,7 +351,7 @@ def budgets():
 
 
         # Get categories
-        cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ? OR user_id IS NULL", user_id)
+        cursor.execute("SELECT category_id, category_name FROM categories WHERE (user_id = ? OR user_id IS NULL) AND category_type = 'expense'", user_id)
         categories = cursor.fetchall()
 
     return render_template("budgets.html", budgets=budgets, categories=categories, available_months=available_months)
@@ -715,7 +715,7 @@ def edit_recurring(recurring_id):
         r = cursor.fetchone()
 
         # Fetch dropdowns
-        cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ?", user_id)
+        cursor.execute("SELECT category_id, category_name FROM categories WHERE user_id = ? OR user_id IS NULL", user_id)
         categories = cursor.fetchall()
         cursor.execute("SELECT account_id, account_name FROM user_accounts WHERE user_id = ?", user_id)
         accounts = cursor.fetchall()
@@ -901,7 +901,7 @@ def delete_notification(notification_id):
 def dashboard():
     user_id = session["user_id"]
     today = datetime.today()
-    month_start = today.replace(day=1)
+    month_start = datetime(today.year, today.month, 1)
 
     with get_cursor() as cursor:
 
@@ -986,6 +986,103 @@ def dashboard():
         recurring=recurring,
         notifications=notifications
     )
+
+##-------------User Profile Module-----------------------
+##------------------------------------------------------
+
+##---------User Profile route------------------------
+
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+
+    with get_cursor() as cursor:
+        cursor.execute("SELECT full_name, email, created_at FROM users WHERE user_id = ?", (user_id,))
+        user = cursor.fetchone()
+
+        cursor.execute("""
+            SELECT TOP 1 created_at FROM user_sessions 
+            WHERE user_id = ? ORDER BY created_at DESC
+        """, (user_id,))
+        last_login = cursor.fetchone()
+
+        cursor.execute("SELECT COUNT(*) FROM transactions WHERE user_id = ?", (user_id,))
+        transaction_count = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM budgets WHERE user_id = ?", (user_id,))
+        budget_count = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM savings_goals WHERE user_id = ?", (user_id,))
+        savings_count = cursor.fetchone()[0]
+
+    return render_template('profile.html', user=user, last_login=last_login,
+                           transaction_count=transaction_count,
+                           budget_count=budget_count,
+                           savings_count=savings_count)
+
+##-----------------Change Password route--------------------
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+
+    current_pw = request.form['current_password']
+    new_pw = request.form['new_password']
+    confirm_pw = request.form['confirm_password']
+
+    if new_pw != confirm_pw:
+        return "Passwords do not match"
+
+    with get_cursor() as cursor:
+        cursor.execute("SELECT password_hash FROM users WHERE user_id = ?", (user_id,))
+        pw_hash = cursor.fetchone()[0]
+
+        if not check_password_hash(pw_hash, current_pw):
+            return "Incorrect current password"
+
+        new_hash = generate_password_hash(new_pw)
+        cursor.execute("UPDATE users SET password_hash = ? WHERE user_id = ?", (new_hash, user_id))
+
+    return redirect('/profile')
+
+##--------------------Delete account route---------------
+
+@app.route('/delete_account', methods=['POST'])
+def delete_account():
+    user_id = session.get('user_id')
+    if user_id:
+        with get_cursor() as cursor:
+            cursor.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+        session.clear()
+    return redirect('/register')
+
+## ------------------linked accounts-----------------
+@app.route('/accounts', methods=['GET', 'POST'])
+def accounts():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+
+    with get_cursor() as cursor:
+        if request.method == 'POST':
+            name = request.form['account_name']
+            acc_type = request.form['account_type']
+            balance = float(request.form['balance'])
+
+            cursor.execute("""
+                INSERT INTO user_accounts (user_id, account_name, account_type, balance)
+                VALUES (?, ?, ?, ?)""", (user_id, name, acc_type, balance))
+            return redirect('/accounts')
+
+        cursor.execute("SELECT account_id, account_name, account_type, balance FROM user_accounts WHERE user_id = ?", (user_id,))
+        accounts = cursor.fetchall()
+
+    return render_template('accounts.html', accounts=accounts)
+
+
 
 
 if __name__ == "__main__":

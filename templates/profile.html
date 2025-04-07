@@ -1,0 +1,34 @@
+﻿{% extends "layout.html" %}
+
+{% block title %}Profile - Expense Tracker{% endblock %}
+
+{% block content %}
+<h2>👤 User Profile</h2>
+
+<p><strong>Full Name:</strong> {{ user.full_name }}</p>
+<p><strong>Email:</strong> {{ user.email }}</p>
+<p><strong>Account Created:</strong> {{ user.created_at }}</p>
+
+<hr>
+<h3>📊 Activity Summary</h3>
+<ul>
+    <li>Total Transactions: {{ transaction_count }}</li>
+    <li>Budgets Created: {{ budget_count }}</li>
+    <li>Savings Goals: {{ savings_count }}</li>
+</ul>
+
+<hr>
+<h3>🔐 Change Password</h3>
+<form method="POST" action="/change_password">
+    <input type="password" name="current_password" placeholder="Current Password" required><br><br>
+    <input type="password" name="new_password" placeholder="New Password" required><br><br>
+    <input type="password" name="confirm_password" placeholder="Confirm New Password" required><br><br>
+    <button type="submit">Update Password</button>
+</form>
+
+<hr>
+<h3 style="color: red;">⚠️ Delete Account</h3>
+<form method="POST" action="/delete_account" onsubmit="return confirm('Are you sure? This will permanently delete your account.')">
+    <button type="submit" style="color: red;">Delete Account</button>
+</form>
+{% endblock %}

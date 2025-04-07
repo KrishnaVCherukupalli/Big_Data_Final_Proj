@@ -9,7 +9,7 @@
     <label>Category:</label><br>
     <select name="category_id" required>
         {% for c in categories %}
-        <option value="{{ c.category_id }}" {% if c.category_id= =r.category_id %}selected{% endif %}>
+        <option value="{{ c.category_id }}" {% if c.category_id==r.category_id %}selected{% endif %}>
             {{ c.category_name }}
         </option>
         {% endfor %}
@@ -17,8 +17,8 @@
 
     <label>Type:</label><br>
     <select name="transaction_type">
-        <option value="income" {% if r.transaction_type= ='income' %}selected{% endif %}>Income</option>
-        <option value="expense" {% if r.transaction_type= ='expense' %}selected{% endif %}>Expense</option>
+        <option value="income" {% if r.transaction_type=='income' %}selected{% endif %}>Income</option>
+        <option value="expense" {% if r.transaction_type=='expense' %}selected{% endif %}>Expense</option>
     </select><br><br>
 
     <label>Amount:</label><br>
@@ -26,10 +26,10 @@
 
     <label>Frequency:</label><br>
     <select name="frequency">
-        <option value="daily" {% if r.frequency= ='daily' %}selected{% endif %}>Daily</option>
-        <option value="weekly" {% if r.frequency= ='weekly' %}selected{% endif %}>Weekly</option>
-        <option value="monthly" {% if r.frequency= ='monthly' %}selected{% endif %}>Monthly</option>
-        <option value="yearly" {% if r.frequency= ='yearly' %}selected{% endif %}>Yearly</option>
+        <option value="daily" {% if r.frequency=='daily' %}selected{% endif %}>Daily</option>
+        <option value="weekly" {% if r.frequency=='weekly' %}selected{% endif %}>Weekly</option>
+        <option value="monthly" {% if r.frequency=='monthly' %}selected{% endif %}>Monthly</option>
+        <option value="yearly" {% if r.frequency=='yearly' %}selected{% endif %}>Yearly</option>
     </select><br><br>
 
     <label>Start Date:</label><br>
@@ -45,7 +45,7 @@
     <select name="account_id">
         <option value="">-- None --</option>
         {% for a in accounts %}
-        <option value="{{ a.account_id }}" {% if a.account_id= =r.account_id %}selected{% endif %}>
+        <option value="{{ a.account_id }}" {% if a.account_id==r.account_id %}selected{% endif %}>
             {{ a.account_name }}
         </option>
         {% endfor %}
