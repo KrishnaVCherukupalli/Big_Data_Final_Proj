@@ -33,9 +33,10 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 def get_connection():
     return pyodbc.connect(
         'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=DESKTOP-FB8BVHB\PRSQL;'  # change as needed
+        'SERVER=100.100.42.84,1433;'  # change as needed
         'DATABASE=Expense_Tracker;'
-        'Trusted_Connection=yes;'
+        'UID=friend_user;'
+        'PWD=StrongPassword123!;'
     )
 
 @contextmanager
@@ -413,9 +414,11 @@ def export_transactions():
             line = f"{row[0]} | {row[1]} | {row[2]} | ${row[3]:.2f} | {row[4]}"
             pdf.cell(200, 10, line, ln=True)
         output = io.BytesIO()
-        pdf.output(output)
+        pdf_bytes = pdf.output(dest='S').encode('latin1')  # 'S' = return as string
+        output.write(pdf_bytes)
         output.seek(0)
         return send_file(output, mimetype='application/pdf', as_attachment=True, download_name="transactions.pdf")
+
 
 
 ##--------------Budget Module--------------
