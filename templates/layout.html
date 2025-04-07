@@ -1,29 +1,111 @@
 ﻿<!-- templates/layout.html -->
 <!DOCTYPE html>
 <html>
-<head>
-    <title>{% block title %}Expense Tracker{% endblock %}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-
-        nav {
-            margin-bottom: 20px;
-        }
-
+    <head>
+        <title>{% block title %}Expense Tracker{% endblock %}</title>
+        <style>
+            :root {
+                --bg-color: #ffffff;
+                --text-color: #000000;
+                --nav-bg: #f2f2f2;
+                --card-bg: #ffffff;
+                --link-color: #0077b6;
+            }
+    
+            body.dark {
+                --bg-color: #121212;
+                --text-color: #e0e0e0;
+                --nav-bg: #1f1f1f;
+                --card-bg: #1e1e1e;
+                --link-color: #64b5f6;
+            }
+    
+            body {
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                transition: all 0.3s ease;
+            }
+    
+            nav {
+                background-color: var(--nav-bg);
+                padding: 10px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+            }
+    
             nav a {
                 margin-right: 15px;
                 text-decoration: none;
+                color: var(--link-color);
             }
+    
+            nav a:hover {
+                text-decoration: underline;
+            }
+    
+            .toggle-dark {
+                float: right;
+                margin-right: 10px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                color: var(--link-color);
+            }
+    
+            .card, .stats .card {
+                background-color: var(--card-bg);
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                border-radius: 10px;
+            }
+    
+            table {
+                background-color: var(--card-bg);
+            }
+    
+            input, button, select, textarea {
+                background-color: var(--card-bg);
+                color: var(--text-color);
+                border: 1px solid #666;
+                padding: 6px;
+                margin: 5px;
+                border-radius: 5px;
+            }
+    
+            input[type="date"]::-webkit-calendar-picker-indicator {
+                filter: invert(1);
+            }
+        </style>
+    </head>
 
-                nav a:hover {
-                    text-decoration: underline;
-                }
-    </style>
-</head>
+    
+    
+
 <body>
+
+    <script>
+        function updateToggleIcon(isDark) {
+            const icon = document.getElementById("themeToggle");
+            icon.textContent = isDark ? "🔆" : "🌙";
+        }
+    
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem("theme", isDark ? "dark" : "light");
+            updateToggleIcon(isDark);
+        }
+    
+        // On page load
+        (function () {
+            const savedTheme = localStorage.getItem("theme");
+            const isDark = savedTheme === "dark";
+            if (isDark) {
+                document.body.classList.add("dark");
+            }
+            updateToggleIcon(isDark);
+        })();
+    </script>
+    
 
     {% if session.user_id %}
     <nav>
@@ -34,9 +116,13 @@
         <a href="/recurring">🔁 Recurring</a>
         <a href="/bills">🧾 Bills</a>
         <a href="/notifications">🔔 Notifications</a>
+        <a href="/analysis">📈 Analysis</a> <!-- 🔥 NEW -->
+        <a href="/debts">💳 Debts</a>
         <a href="/profile">👤 Profile</a>
         <a href="/logout">🚪 Logout</a>
+        <div class="toggle-dark" onclick="toggleTheme()" id="themeToggle">🌙</div>
     </nav>
+
     {% endif %}
 
     {% if alert %}

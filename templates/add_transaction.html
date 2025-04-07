@@ -32,11 +32,13 @@
     <label>Receipt Upload (PNG/JPG/PDF):</label>
     <input type="file" name="receipt_file"><br><br>
 
-    <label>Account (optional):</label>
-    <select name="account_id">
-        <option value="">-- None --</option>
-        {% for acc in accounts %}
-        <option value="{{ acc.account_id }}">{{ acc.account_name }}</option>
+    <label>Account:</label>
+    <select name="account_id" required>
+        {% for a in accounts %}
+        <option value="{{ a.account_id }}"
+                {% if a.account_name=='Default Account' %}selected{% endif %}>
+            {{ a.account_name }}
+        </option>
         {% endfor %}
     </select><br><br>
 

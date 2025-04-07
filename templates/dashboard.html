@@ -98,7 +98,7 @@
         <tr>
             <td>{{ n.message }}</td>
             <td>{{ n.notification_type }}</td>
-            <td>{{ n.created_at }}</td>
+            <td>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
         </tr>
         {% else %}
         <tr><td colspan="3">No unread notifications</td></tr>
