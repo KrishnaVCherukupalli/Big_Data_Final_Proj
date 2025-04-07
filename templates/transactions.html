@@ -5,83 +5,180 @@
 <h1>📒 My Transactions</h1>
 
 {% if alert %}
-<p style="color:red;">{{ alert }}</p>
+<p class="alert-text">{{ alert }}</p>
 {% endif %}
 
-<!-- Filter Form -->
-<form method="get" action="/transactions">
-    <label>Type:</label>
-    <select name="type">
-        <option value="">All</option>
-        <option value="income">Income</option>
-        <option value="expense">Expense</option>
-    </select>
+<div class="transaction-container">
 
-    <label>Date:</label>
-    <input type="date" name="from"> to <input type="date" name="to">
+    <!-- Filter Form -->
+    <form method="get" action="/transactions" class="form-inline">
+        <div class="form-group">
+            <label>Type:</label>
+            <select name="type">
+                <option value="">All</option>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+            </select>
+        </div>
 
-    <input type="text" name="keyword" placeholder="Search description...">
-    <button type="submit">🔍 Filter</button>
-</form>
+        <div class="form-group">
+            <label>Date:</label>
+            <input type="date" name="from"> to <input type="date" name="to">
+        </div>
 
-<!-- Export Form -->
-<form method="post" action="/export_transactions" style="margin-top: 10px;">
-    <label>Export:</label>
-    <select name="format">
-        <option value="csv">CSV</option>
-        <option value="pdf">PDF</option>
-    </select>
-    <button type="submit">📁 Download</button>
-</form>
+        <div class="form-group">
+            <input type="text" name="keyword" placeholder="Search description...">
+            <button type="submit">🔍 Filter</button>
+        </div>
+    </form>
 
-<!-- Add Button -->
-<p style="margin-top: 10px;">
-    <a href="/add_transaction">➕ Add New Transaction</a>
-</p>
+    <!-- Export Form -->
+    <form method="post" action="/export_transactions" class="form-inline mt-1">
+        <label>Export:</label>
+        <select name="format">
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+        </select>
+        <button type="submit">📁 Download</button>
+    </form>
 
-<!-- Transaction Table -->
-<table border="1" cellpadding="8" cellspacing="0">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Description</th>
-            <th>Account</th>
-            <th>Receipt</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for txn in transactions %}
-        <tr>
-            <td>{{ txn.transaction_date }}</td>
-            <td>{{ txn.transaction_type | capitalize }}</td>
-            <td>{{ txn.category_name or 'N/A' }}</td>
-            <td>${{ "%.2f"|format(txn.amount) }}</td>
-            <td>{{ txn.description or '' }}</td>
-            <td>{{ txn.account_name or 'N/A' }}</td>
-            <td>
-                {% if txn.receipt_url %}
-                <a href="{{ '/' + txn.receipt_url }}" target="_blank">📎 View</a>
+    <!-- Add Transaction -->
+    <div class="mt-1">
+        <a href="/add_transaction" class="btn-link">➕ Add New Transaction</a>
+    </div>
+
+    <!-- Transaction Table -->
+    <div class="table-responsive mt-2">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Account</th>
+                    <th>Receipt</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.transaction_date }}</td>
+                    <td>{{ txn.transaction_type | capitalize }}</td>
+                    <td>{{ txn.category_name or 'N/A' }}</td>
+                    <td>${{ "%.2f"|format(txn.amount) }}</td>
+                    <td>{{ txn.description or '' }}</td>
+                    <td>{{ txn.account_name or 'N/A' }}</td>
+                    <td>
+                        {% if txn.receipt_url %}
+                        <a href="{{ '/' + txn.receipt_url }}" target="_blank">📎 View</a>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        <a href="/edit_transaction/{{ txn.transaction_id }}">✏️</a> |
+                        <a href="/delete_transaction/{{ txn.transaction_id }}" onclick="return confirm('Delete this transaction?');">🗑️</a>
+                    </td>
+                </tr>
                 {% else %}
-                -
-                {% endif %}
-            </td>
-            <td>
-                <a href="/edit_transaction/{{ txn.transaction_id }}">✏️ Edit</a> |
-                <a href="/delete_transaction/{{ txn.transaction_id }}" onclick="return confirm('Delete this transaction?');">🗑️ Delete</a>
-            </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="8">No transactions found.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+                <tr><td colspan="8">No transactions found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-<!-- Recurring Transactions Button -->
-<form action="/generate_recurring" style="margin-top: 10px;">
-    <button type="submit">🔁 Generate Due Transactions</button>
-</form>
+    <!-- Recurring Transactions Button -->
+    <form action="/generate_recurring" class="mt-2">
+        <button type="submit">🔁 Generate Due Transactions</button>
+    </form>
+</div>
+
+<style>
+    .transaction-container {
+        max-width: 1200px;
+        margin: auto;
+    }
+
+    .alert-text {
+        color: crimson;
+        font-weight: bold;
+        margin: 1rem 0;
+    }
+
+    .form-inline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .form-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mt-1 {
+        margin-top: 1rem;
+    }
+
+    .mt-2 {
+        margin-top: 2rem;
+    }
+
+    .btn-link {
+        color: var(--link-color);
+        font-weight: bold;
+        text-decoration: none;
+        border: 1px solid var(--link-color);
+        padding: 6px 12px;
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+
+    .btn-link:hover {
+        background-color: var(--link-color);
+        color: white;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        background-color: var(--card-bg);
+    }
+
+    .styled-table th, .styled-table td {
+        padding: 12px 16px;
+        border: 1px solid #ccc;
+        text-align: left;
+    }
+
+    .styled-table th {
+        background-color: #f1f1f1;
+        color: #333;
+    }
+
+    body.dark .styled-table th {
+        background-color: #2a2a2a;
+        color: #ccc;
+    }
+
+    .styled-table tr:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 768px) {
+        .form-inline {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
 {% endblock %}

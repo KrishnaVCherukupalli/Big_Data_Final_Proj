@@ -5,28 +5,78 @@
 {% block content %}
 <h2>✏️ Edit Linked Account</h2>
 
-<form method="POST">
-    <label>Account Name:</label><br>
-    <input type="text" name="account_name" value="{{ acc.account_name }}" required><br><br>
+<div class="form-card">
+    <form method="POST" class="styled-form">
+        <label>Account Name:</label>
+        <input type="text" name="account_name" value="{{ acc.account_name }}" required>
 
-    <label>Account Type:</label><br>
-    <input type="text" name="account_type" value="{{ acc.account_type }}" required><br><br>
+        <label>Account Type:</label>
+        <input type="text" name="account_type" value="{{ acc.account_type }}" required>
 
-    <label>Current Balance:</label><br>
-    <input type="number" name="current_balance" step="0.01" value="{{ acc.current_balance }}" required><br><br>
+        <label>Current Balance:</label>
+        <input type="number" name="current_balance" step="0.01" value="{{ acc.current_balance }}" required>
 
-    <label>Currency:</label><br>
-    <input type="text" name="currency" value="{{ acc.currency or 'CAD' }}"><br><br>
+        <label>Currency:</label>
+        <input type="text" name="currency" value="{{ acc.currency or 'CAD' }}">
 
-    <label>Status:</label><br>
-    <select name="is_active">
-        <option value="1" {% if acc.is_active %}selected{% endif %}>Active</option>
-        <option value="0" {% if not acc.is_active %}selected{% endif %}>Inactive</option>
-    </select><br><br>
+        <label>Status:</label>
+        <select name="is_active">
+            <option value="1" {% if acc.is_active %}selected{% endif %}>Active</option>
+            <option value="0" {% if not acc.is_active %}selected{% endif %}>Inactive</option>
+        </select>
 
-    <button type="submit">💾 Update Account</button>
-</form>
+        <button type="submit">💾 Update Account</button>
+    </form>
+</div>
 
 <br>
 <a href="/accounts">← Back to Linked Accounts</a>
+
+<!-- CSS Styling -->
+<style>
+    .form-card {
+        background: #fff;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin-bottom: 20px;
+    }
+
+    .styled-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .styled-form input,
+    .styled-form select,
+    .styled-form button {
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+    }
+
+    .styled-form button {
+        background-color: #1976d2;
+        color: #fff;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .styled-form button:hover {
+        background-color: #1565c0;
+    }
+
+    a {
+        color: #1976d2;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+</style>
 {% endblock %}

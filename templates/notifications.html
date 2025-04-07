@@ -6,81 +6,149 @@
 <h1>🔔 Notifications Center</h1>
 
 <!-- Filter by Type -->
-<form method="get" action="/notifications">
-    <label>Filter by type:</label>
-    <select name="type" onchange="this.form.submit()">
-        <option value="">-- All --</option>
-        <option value="bill_reminder" {% if selected_type=='bill_reminder' %}selected{% endif %}>Bill Reminder</option>
-        <option value="budget_alert" {% if selected_type=='budget_alert' %}selected{% endif %}>Budget Alert</option>
-        <option value="low_balance" {% if selected_type=='low_balance' %}selected{% endif %}>Low Balance</option>
-        <option value="subscription_renewal" {% if selected_type=='subscription_renewal' %}selected{% endif %}>Subscription</option>
-        <option value="debt_reminder" {% if selected_type=='debt_reminder' %}selected{% endif %}>Debt Reminder</option>
-        <option value="goal_reached" {% if selected_type=='goal_reached' %}selected{% endif %}>Savings Goal</option>
-        <option value="system" {% if selected_type=='system' %}selected{% endif %}>System</option>
-    </select>
+<form method="get" action="/notifications" class="filter-form">
+  <label>Filter by type:</label>
+  <select name="type" onchange="this.form.submit()">
+    <option value="">-- All --</option>
+    <option value="bill_reminder" {% if selected_type=='bill_reminder' %}selected{% endif %}>Bill Reminder</option>
+    <option value="budget_alert" {% if selected_type=='budget_alert' %}selected{% endif %}>Budget Alert</option>
+    <option value="low_balance" {% if selected_type=='low_balance' %}selected{% endif %}>Low Balance</option>
+    <option value="subscription_renewal" {% if selected_type=='subscription_renewal' %}selected{% endif %}>Subscription</option>
+    <option value="debt_reminder" {% if selected_type=='debt_reminder' %}selected{% endif %}>Debt Reminder</option>
+    <option value="goal_reached" {% if selected_type=='goal_reached' %}selected{% endif %}>Savings Goal</option>
+    <option value="system" {% if selected_type=='system' %}selected{% endif %}>System</option>
+  </select>
 </form>
 
-<br>
-<hr>
+<hr class="section-divider">
 
 <!-- Notifications Table -->
-<table border="1" cellpadding="8">
-    <thead>
-        <tr>
-            <th>Message</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for n in notifications %}
-        <tr>
-            <td>{{ n.message }}</td>
-            <td>{{ n.notification_type.replace('_', ' ')|title }}</td>
-            <td style="color: {% if n.is_read %}green{% else %}red{% endif %};">
-                {{ "Read" if n.is_read else "Unread" }}
-            </td>
-            <td>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>
-                {% if not n.is_read %}
-                <a href="/mark_notification_read/{{ n.notification_id }}">✔ Mark as Read</a><br>
-                {% endif %}
-                <a href="/delete_notification/{{ n.notification_id }}" onclick="return confirm('Delete this notification?');">🗑 Delete</a>
-            </td>
-            <td>
-                {% if n.notification_type == 'low_balance' and not n.is_read %}
-                    <strong style="color:#e53935;">{{ n.message }}</strong>
-                {% else %}
-                    {{ n.message }}
-                {% endif %}
-            </td>
-            <td>
-                <span style="padding:4px 8px; border-radius:8px; background-color:
-                    {% if n.notification_type == 'low_balance' %}#ffcccb
-                    {% elif n.notification_type == 'budget_alert' %}#ffe082
-                    {% elif n.notification_type == 'bill_reminder' %}#b3e5fc
-                    {% elif n.notification_type == 'subscription_renewal' %}#d1c4e9
-                    {% elif n.notification_type == 'goal_reached' %}#c8e6c9
-                    {% elif n.notification_type == 'debt_reminder' %}#f8bbd0
-                    {% else %}#e0e0e0
-                    {% endif %};">{{ n.notification_type.replace('_', ' ')|title }}</span>
-            </td>
-            <td>
-                {% if n.notification_type == 'low_balance' and not n.is_read %}
-                    <strong style="color:#e53935;">{{ n.message }}</strong>
-                {% else %}
-                    {{ n.message }}
-                {% endif %}
-            </td>            
-        </tr>
+<table class="styled-table">
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Message</th>
+      <th>Status</th>
+      <th>Created</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for n in notifications %}
+    <tr class="{{ 'unread' if not n.is_read else '' }}">
+      <td>
+        <span class="badge {{ n.notification_type }}">
+          {{ n.notification_type.replace('_', ' ')|title }}
+        </span>
+      </td>
+      <td>
+        {% if n.notification_type == 'low_balance' and not n.is_read %}
+        <strong class="critical">{{ n.message }}</strong>
         {% else %}
-        <tr><td colspan="5">No notifications found.</td></tr>
-        {% endfor %}
-    </tbody>
+        {{ n.message }}
+        {% endif %}
+      </td>
+      <td>
+        <span class="{{ 'status-read' if n.is_read else 'status-unread' }}">
+          {{ "Read" if n.is_read else "Unread" }}
+        </span>
+      </td>
+      <td>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>
+        {% if not n.is_read %}
+        <a href="/mark_notification_read/{{ n.notification_id }}">✔ Mark as Read</a><br>
+        {% endif %}
+        <a href="/delete_notification/{{ n.notification_id }}" onclick="return confirm('Delete this notification?');">🗑 Delete</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">No notifications found.</td></tr>
+    {% endfor %}
+  </tbody>
 </table>
 
 <br>
-<a href="/dashboard">← Back to Dashboard</a>
+<a class="btn-link" href="/dashboard">← Back to Dashboard</a>
+
+<style>
+  .filter-form {
+    margin-bottom: 20px;
+  }
+
+  .styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .styled-table th, .styled-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .styled-table th {
+    background-color: #f8f9fa;
+    text-align: left;
+  }
+
+  .styled-table tr.unread {
+    background-color: #fff9f0;
+  }
+
+  .status-read {
+    color: green;
+    font-weight: bold;
+  }
+
+  .status-unread {
+    color: #e53935;
+    font-weight: bold;
+  }
+
+  .badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.9em;
+    color: white;
+    display: inline-block;
+  }
+
+  .badge.low_balance { background-color: #e53935; }
+  .badge.budget_alert { background-color: #fb8c00; }
+  .badge.bill_reminder { background-color: #29b6f6; }
+  .badge.subscription_renewal { background-color: #ab47bc; }
+  .badge.goal_reached { background-color: #43a047; }
+  .badge.debt_reminder { background-color: #ec407a; }
+  .badge.system { background-color: #78909c; }
+
+  .critical {
+    color: #c62828;
+    font-weight: bold;
+  }
+
+  .btn-link {
+    display: inline-block;
+    margin-top: 20px;
+    text-decoration: none;
+    padding: 8px 14px;
+    border: 1px solid var(--link-color);
+    color: var(--link-color);
+    border-radius: 6px;
+    transition: 0.3s ease;
+  }
+
+  .btn-link:hover {
+    background-color: var(--link-color);
+    color: white;
+  }
+
+  .section-divider {
+    margin: 30px 0;
+    border: none;
+    border-top: 1px solid #ccc;
+  }
+</style>
 {% endblock %}

@@ -5,19 +5,94 @@
 {% block content %}
 <h1>✏️ Edit Savings Goal</h1>
 
-<form method="post">
-    <label>Goal Name:</label><br>
-    <input type="text" name="goal_name" value="{{ goal.goal_name }}" required><br><br>
+<div class="form-container">
+    <form method="post">
+        <div class="form-group">
+            <label>Goal Name:</label>
+            <input type="text" name="goal_name" value="{{ goal.goal_name }}" required>
+        </div>
 
-    <label>Target Amount:</label><br>
-    <input type="number" name="target_amount" value="{{ goal.target_amount }}" step="0.01" required><br><br>
+        <div class="form-group">
+            <label>Target Amount:</label>
+            <input type="number" name="target_amount" value="{{ goal.target_amount }}" step="0.01" required>
+        </div>
 
-    <label>Target Date:</label><br>
-    <input type="date" name="target_date" value="{{ goal.target_date }}" required><br><br>
+        <div class="form-group">
+            <label>Target Date:</label>
+            <input type="date" name="target_date" value="{{ goal.target_date }}" required>
+        </div>
 
-    <button type="submit">💾 Save Changes</button>
-</form>
+        <button type="submit" class="primary-btn">💾 Save Changes</button>
+    </form>
 
-<br>
-<a href="/savings">← Back to Savings</a>
+    <a class="btn-link" href="/savings">← Back to Savings</a>
+</div>
+
+<style>
+    .form-container {
+        max-width: 500px;
+        margin: auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        transition: border 0.2s ease;
+    }
+
+    input:focus {
+        border-color: #2196f3;
+        outline: none;
+    }
+
+    .primary-btn {
+        background-color: #2196f3;
+        color: white;
+        padding: 10px 20px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .primary-btn:hover {
+        background-color: #1976d2;
+    }
+
+    .btn-link {
+        display: inline-block;
+        margin-top: 20px;
+        text-decoration: none;
+        padding: 8px 14px;
+        border: 1px solid #2196f3;
+        color: #2196f3;
+        border-radius: 6px;
+        transition: 0.3s ease;
+    }
+
+    .btn-link:hover {
+        background-color: #2196f3;
+        color: white;
+    }
+</style>
 {% endblock %}

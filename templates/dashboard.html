@@ -1,108 +1,186 @@
 ﻿{% extends "layout.html" %}
-
 {% block title %}Dashboard - Expense Tracker{% endblock %}
 
 {% block content %}
 <h1>📊 Dashboard</h1>
 
 <!-- Summary Cards -->
-<div style="display: flex; gap: 30px; margin-bottom: 30px;">
-    <div><strong>Total Balance:</strong> ${{ "%.2f"|format(total_balance) }}</div>
-    <div><strong>Income (This Month):</strong> ${{ "%.2f"|format(total_income) }}</div>
-    <div><strong>Expenses (This Month):</strong> ${{ "%.2f"|format(total_expenses) }}</div>
-    <div><strong>Savings Progress:</strong> {{ "%.1f"|format(savings_progress) }}%</div>
+<div class="summary-cards">
+    <div class="card">💰 <strong>Total Balance:</strong><br> ${{ "%.2f"|format(total_balance) }}</div>
+    <div class="card">📈 <strong>Income (This Month):</strong><br> ${{ "%.2f"|format(total_income) }}</div>
+    <div class="card">📉 <strong>Expenses (This Month):</strong><br> ${{ "%.2f"|format(total_expenses) }}</div>
+    <div class="card">🏦 <strong>Savings Progress:</strong><br> {{ "%.1f"|format(savings_progress) }}%</div>
 </div>
 
-<hr>
-
 <!-- Pie Chart -->
-<h2>Category-wise Expenses (This Month)</h2>
-{% if chart_labels %}
-<canvas id="expenseChart" width="400" height="300"></canvas>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const ctx = document.getElementById('expenseChart').getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: {{ chart_labels | tojson }},
-            datasets: [{
-                label: 'Expenses',
-                data: {{ chart_values | tojson }},
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: false
-        }
-    });
-</script>
-{% else %}
-<p>No expense data available for this month.</p>
-{% endif %}
-
-<hr>
+<div class="chart-container">
+    <h2>📂 Category-wise Expenses (This Month)</h2>
+    {% if chart_labels %}
+    <canvas id="expenseChart" width="400" height="300"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: {{ chart_labels | tojson }},
+                datasets: [{
+                    label: 'Expenses',
+                    data: {{ chart_values | tojson }},
+                    backgroundColor: [
+                        '#ff6384', '#36a2eb', '#ffce56', '#4bc0c0',
+                        '#9966ff', '#ff9f40', '#e57373', '#81c784',
+                        '#64b5f6', '#ffd54f'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+    {% else %}
+    <p class="no-data">No expense data available for this month.</p>
+    {% endif %}
+</div>
 
 <!-- Upcoming Bills -->
-<h2>📅 Upcoming Bills</h2>
-<table border="1" cellpadding="8">
-    <thead>
-        <tr><th>Bill</th><th>Amount</th><th>Due Date</th><th>Status</th></tr>
-    </thead>
-    <tbody>
-        {% for b in upcoming_bills %}
-        <tr>
-            <td>{{ b.bill_name }}</td>
-            <td>${{ "%.2f"|format(b.amount) }}</td>
-            <td>{{ b.due_date }}</td>
-            <td style="color: red;">{{ b.status }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4">No upcoming bills</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<hr>
+<div class="section">
+    <h2>📅 Upcoming Bills</h2>
+    <table class="styled-table">
+        <thead>
+            <tr><th>Bill</th><th>Amount</th><th>Due Date</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            {% for b in upcoming_bills %}
+            <tr>
+                <td>{{ b.bill_name }}</td>
+                <td>${{ "%.2f"|format(b.amount) }}</td>
+                <td>{{ b.due_date }}</td>
+                <td class="status-{{ b.status }}">{{ b.status|capitalize }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">No upcoming bills</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 <!-- Recurring -->
-<h2>🔁 Recurring Transactions (Upcoming)</h2>
-<table border="1" cellpadding="8">
-    <thead>
-        <tr><th>Category</th><th>Amount</th><th>Frequency</th><th>Start</th></tr>
-    </thead>
-    <tbody>
-        {% for r in recurring %}
-        <tr>
-            <td>{{ r.category_name }}</td>
-            <td>${{ "%.2f"|format(r.amount) }}</td>
-            <td>{{ r.frequency }}</td>
-            <td>{{ r.start_date }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4">No recurring items</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="section">
+    <h2>🔁 Recurring Transactions (Upcoming)</h2>
+    <table class="styled-table">
+        <thead>
+            <tr><th>Category</th><th>Amount</th><th>Frequency</th><th>Start</th></tr>
+        </thead>
+        <tbody>
+            {% for r in recurring %}
+            <tr>
+                <td>{{ r.category_name }}</td>
+                <td>${{ "%.2f"|format(r.amount) }}</td>
+                <td>{{ r.frequency|capitalize }}</td>
+                <td>{{ r.start_date }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">No recurring items</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-<hr>
+<!-- Notifications -->
+<div class="section">
+    <h2>🔔 Unread Notifications</h2>
+    <table class="styled-table">
+        <thead>
+            <tr><th>Message</th><th>Type</th><th>Time</th></tr>
+        </thead>
+        <tbody>
+            {% for n in notifications %}
+            <tr>
+                <td>{{ n.message }}</td>
+                <td>{{ n.notification_type.replace('_', ' ')|title }}</td>
+                <td>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3">No unread notifications</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-<!-- Unread Notifications -->
-<h2>🔔 Unread Notifications</h2>
-<table border="1" cellpadding="8">
-    <thead>
-        <tr><th>Message</th><th>Type</th><th>Time</th></tr>
-    </thead>
-    <tbody>
-        {% for n in notifications %}
-        <tr>
-            <td>{{ n.message }}</td>
-            <td>{{ n.notification_type }}</td>
-            <td>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="3">No unread notifications</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!-- CSS Styling -->
+<style>
+    .summary-cards {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        background-color: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        width: 220px;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .chart-container {
+        margin-bottom: 40px;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    .styled-table th, .styled-table td {
+        border-bottom: 1px solid #ddd;
+        padding: 12px;
+        text-align: center;
+    }
+
+    .styled-table th {
+        background-color: #f4f4f4;
+    }
+
+    .status-paid {
+        color: green;
+    }
+
+    .status-pending {
+        color: red;
+    }
+
+    .section {
+        margin-top: 40px;
+    }
+
+    .no-data {
+        font-style: italic;
+        color: #999;
+        margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+        .summary-cards {
+            flex-direction: column;
+        }
+
+        .card {
+            width: 100%;
+        }
+    }
+</style>
 {% endblock %}

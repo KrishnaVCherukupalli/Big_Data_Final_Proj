@@ -5,47 +5,134 @@
 {% block content %}
 <h1>✏️ Edit Transaction</h1>
 
-<form method="post">
-    <label>Category:</label><br>
-    <select name="category_id" required>
-        {% for c in categories %}
-        <option value="{{ c.category_id }}" {% if c.category_id==transaction.category_id %}selected{% endif %}>
-            {{ c.category_name }}
-        </option>
-        {% endfor %}
-    </select><br><br>
+<div class="form-container">
+    <form method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Category:</label>
+            <select name="category_id" required>
+                {% for c in categories %}
+                <option value="{{ c.category_id }}" {% if c.category_id==transaction.category_id %}selected{% endif %}>
+                    {{ c.category_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <label>Type:</label><br>
-    <select name="transaction_type" required>
-        <option value="income" {% if transaction.transaction_type=='income' %}selected{% endif %}>Income</option>
-        <option value="expense" {% if transaction.transaction_type=='expense' %}selected{% endif %}>Expense</option>
-    </select><br><br>
+        <div class="form-group">
+            <label>Type:</label>
+            <select name="transaction_type" required>
+                <option value="income" {% if transaction.transaction_type=='income' %}selected{% endif %}>Income</option>
+                <option value="expense" {% if transaction.transaction_type=='expense' %}selected{% endif %}>Expense</option>
+            </select>
+        </div>
 
-    <label>Amount:</label><br>
-    <input type="number" name="amount" step="0.01" value="{{ transaction.amount }}" required><br><br>
+        <div class="form-group">
+            <label>Amount:</label>
+            <input type="number" name="amount" step="0.01" value="{{ transaction.amount }}" required>
+        </div>
 
-    <label>Date:</label><br>
-    <input type="date" name="transaction_date" value="{{ transaction.transaction_date }}" required><br><br>
+        <div class="form-group">
+            <label>Date:</label>
+            <input type="date" name="transaction_date" value="{{ transaction.transaction_date }}" required>
+        </div>
 
-    <label>Description:</label><br>
-    <input type="text" name="description" value="{{ transaction.description }}"><br><br>
+        <div class="form-group">
+            <label>Description:</label>
+            <input type="text" name="description" value="{{ transaction.description }}">
+        </div>
 
-    <label>Upload New Receipt (optional):</label><br>
-    <input type="file" name="receipt_file"><br><br>
+        <div class="form-group">
+            <label>Upload New Receipt (optional):</label>
+            <input type="file" name="receipt_file" accept=".jpg,.jpeg,.png,.pdf">
+        </div>
 
-    <label>Account (optional):</label><br>
-    <select name="account_id">
-        <option value="">-- None --</option>
-        {% for acc in accounts %}
-        <option value="{{ acc.account_id }}" {% if acc.account_id==transaction.account_id %}selected{% endif %}>
-            {{ acc.account_name }}
-        </option>
-        {% endfor %}
-    </select><br><br>
+        <div class="form-group">
+            <label>Account (optional):</label>
+            <select name="account_id">
+                <option value="">-- None --</option>
+                {% for acc in accounts %}
+                <option value="{{ acc.account_id }}" {% if acc.account_id==transaction.account_id %}selected{% endif %}>
+                    {{ acc.account_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <button type="submit">💾 Update Transaction</button>
-</form>
+        <button type="submit" class="primary-btn">💾 Update Transaction</button>
+    </form>
 
-<br>
-<a href="/transactions">← Back to Transactions</a>
+    <br>
+    <a class="btn-link" href="/transactions">← Back to Transactions</a>
+</div>
+
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: auto;
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+    }
+
+    select,
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="file"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border 0.2s ease;
+    }
+
+    select:focus,
+    input:focus {
+        border-color: #2196f3;
+        outline: none;
+    }
+
+    .primary-btn {
+        background-color: #2196f3;
+        color: white;
+        padding: 10px 20px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .primary-btn:hover {
+        background-color: #1976d2;
+    }
+
+    .btn-link {
+        display: inline-block;
+        margin-top: 20px;
+        text-decoration: none;
+        padding: 8px 14px;
+        border: 1px solid #2196f3;
+        color: #2196f3;
+        border-radius: 6px;
+        transition: 0.3s ease;
+    }
+
+    .btn-link:hover {
+        background-color: #2196f3;
+        color: white;
+    }
+</style>
 {% endblock %}
