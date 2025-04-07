@@ -51,17 +51,20 @@
     </thead>
     <tbody>
         {% for b in budgets %}
-        {% set usage = (b.total_spent / b.budget_amount * 100) if b.budget_amount > 0 else 0 %}
+        {% set spent = b.total_spent or 0 %}
+        {% set budget = b.budget_amount or 1 %}
+        {% set usage = (spent / budget * 100) if budget > 0 else 0 %}
         <tr>
             <td>{{ b.budget_month }}</td>
             <td>{{ b.category_name }}</td>
             <td>${{ "%.2f"|format(b.budget_amount) }}</td>
             <td>${{ "%.2f"|format(b.total_spent or 0) }}</td>
             <td style="color:
-                {% if usage > 90 %}red
+                {% if usage>
+                90 %}red
                 {% elif usage > 70 %}orange
                 {% else %}green{% endif %};
-            ">
+                ">
                 {{ "%.1f"|format(usage) }}%
             </td>
             <td>{{ b.alert_threshold }}%</td>
