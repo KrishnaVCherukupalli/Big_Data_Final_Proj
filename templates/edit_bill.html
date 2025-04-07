@@ -1,29 +1,86 @@
 ﻿{% extends "layout.html" %}
-
 {% block title %}Edit Bill - Expense Tracker{% endblock %}
 
 {% block content %}
-<h1>✏️ Edit Bill Reminder</h1>
+<div class="edit-bill-container">
+    <h1>✏️ Edit Bill Reminder</h1>
 
-<form method="post">
-    <label>Bill Name:</label>
-    <input type="text" name="bill_name" value="{{ bill.bill_name }}" required><br><br>
+    <form method="post" class="edit-bill-form">
+        <label for="bill_name">Bill Name:</label>
+        <input type="text" name="bill_name" id="bill_name" value="{{ bill.bill_name }}" required>
 
-    <label>Amount:</label>
-    <input type="number" name="amount" value="{{ bill.amount }}" step="0.01" required><br><br>
+        <label for="amount">Amount:</label>
+        <input type="number" name="amount" id="amount" value="{{ bill.amount }}" step="0.01" required>
 
-    <label>Due Date:</label>
-    <input type="date" name="due_date" value="{{ bill.due_date }}" required><br><br>
+        <label for="due_date">Due Date:</label>
+        <input type="date" name="due_date" id="due_date" value="{{ bill.due_date }}" required>
 
-    <label>Status:</label>
-    <select name="status">
-        <option value="pending" {% if bill.status == 'pending' %}selected{% endif %}>Pending</option>
-        <option value="paid" {% if bill.status == 'paid' %}selected{% endif %}>Paid</option>
-    </select><br><br>
+        <label for="status">Status:</label>
+        <select name="status" id="status">
+            <option value="pending" {% if bill.status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="paid" {% if bill.status == 'paid' %}selected{% endif %}>Paid</option>
+        </select>
 
-    <button type="submit">Update Bill</button>
-</form>
+        <button type="submit" class="btn-update">💾 Update Bill</button>
+    </form>
 
-<br>
-<a href="/bills">← Back to Bills</a>
+    <a href="/bills" class="back-link">← Back to Bills</a>
+</div>
+
+<style>
+    .edit-bill-container {
+        max-width: 600px;
+        margin: auto;
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .edit-bill-container h1 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .edit-bill-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .edit-bill-form input,
+    .edit-bill-form select {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+
+    .btn-update {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .btn-update:hover {
+        background-color: #45a049;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 20px;
+        text-decoration: none;
+        color: #555;
+        font-weight: bold;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+</style>
 {% endblock %}

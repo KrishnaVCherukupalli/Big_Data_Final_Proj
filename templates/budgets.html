@@ -1,43 +1,56 @@
 ﻿{% extends "layout.html" %}
 
 {% block content %}
-<h1>Monthly Budgets</h1>
+<h1>📆 Monthly Budgets</h1>
 
-<form method="post">
-    <label>Category:</label>
-    <select name="category_id" required>
-        {% for cat in categories %}
-        <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
-        {% endfor %}
-    </select><br><br>
+<div class="form-container">
+    <form method="post">
+        <div class="form-group">
+            <label>Category:</label>
+            <select name="category_id" required>
+                {% for cat in categories %}
+                <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <label>Budget Month:</label>
-    <input type="month" name="budget_month" required><br><br>
+        <div class="form-group">
+            <label>Budget Month:</label>
+            <input type="month" name="budget_month" required>
+        </div>
 
-    <label>Budget Amount:</label>
-    <input type="number" name="budget_amount" step="0.01" required><br><br>
+        <div class="form-group">
+            <label>Budget Amount ($):</label>
+            <input type="number" name="budget_amount" step="0.01" required>
+        </div>
 
-    <label>Alert Threshold % (default 90):</label>
-    <input type="number" name="alert_threshold" min="50" max="100"><br><br>
+        <div class="form-group">
+            <label>Alert Threshold % (default 90):</label>
+            <input type="number" name="alert_threshold" min="50" max="100">
+        </div>
 
-    <button type="submit">Save Budget</button>
-</form>
+        <button type="submit" class="primary-btn">💾 Save Budget</button>
+    </form>
+</div>
 
 <br><hr><br>
-<h2>Move Unused Budget to Savings</h2>
-<form method="get" action="/move_to_savings">
+
+<h2>💸 Move Unused Budget to Savings</h2>
+<form method="get" action="/move_to_savings" class="inline-form">
     <label>Select Month:</label>
     <select name="month" required>
         {% for m in available_months %}
         <option value="{{ m }}">{{ m }}</option>
         {% endfor %}
     </select>
-    <button type="submit">Move to Savings</button>
+    <button type="submit" class="secondary-btn">➡ Move to Savings</button>
 </form>
 
 <hr>
-<h2>Existing Budgets</h2>
-<table border="1" cellpadding="8">
+
+<h2>📊 Existing Budgets</h2>
+<div class="table-responsive">
+<table class="styled-table">
     <thead>
         <tr>
             <th>Month</th>
@@ -60,22 +73,119 @@
             <td>${{ "%.2f"|format(b.budget_amount) }}</td>
             <td>${{ "%.2f"|format(b.total_spent or 0) }}</td>
             <td style="color:
-                {% if usage>
-                90 %}red
-                {% elif usage > 70 %}orange
-                {% else %}green{% endif %};
-                ">
+                {% if usage > 90 %}#e53935
+                {% elif usage > 70 %}#f57c00
+                {% else %}#43a047{% endif %}; font-weight: bold;">
                 {{ "%.1f"|format(usage) }}%
             </td>
             <td>{{ b.alert_threshold }}%</td>
             <td>
-                <a href="/edit_budget/{{ b.budget_id }}">Edit</a> |
-                <a href="/delete_budget/{{ b.budget_id }}" onclick="return confirm('Delete budget?');">Delete</a>
+                <a href="/edit_budget/{{ b.budget_id }}" class="table-action">✏️ Edit</a> |
+                <a href="/delete_budget/{{ b.budget_id }}" onclick="return confirm('Delete budget?');" class="table-action danger">🗑️ Delete</a>
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="7">No budgets set yet.</td></tr>
+        <tr><td colspan="7" style="text-align: center;">No budgets set yet.</td></tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
+
+<style>
+    .form-container {
+        background: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        max-width: 600px;
+        margin-bottom: 40px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+    }
+
+    .primary-btn, .secondary-btn {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+    .primary-btn {
+        background-color: #1976d2;
+        color: white;
+    }
+
+    .primary-btn:hover {
+        background-color: #125aa0;
+    }
+
+    .secondary-btn {
+        background-color: #43a047;
+        color: white;
+    }
+
+    .secondary-btn:hover {
+        background-color: #388e3c;
+    }
+
+    .inline-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+    }
+
+    .styled-table th, .styled-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .styled-table th {
+        background-color: #f2f2f2;
+        font-weight: 600;
+    }
+
+    .table-action {
+        text-decoration: none;
+        color: #1976d2;
+    }
+
+    .table-action:hover {
+        text-decoration: underline;
+    }
+
+    .danger {
+        color: #e53935;
+    }
+</style>
 {% endblock %}

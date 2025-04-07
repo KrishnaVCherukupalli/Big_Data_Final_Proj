@@ -5,19 +5,105 @@
 {% block content %}
 <h1>✏️ Edit Budget</h1>
 
-<form method="post">
-    <p><strong>Category:</strong> {{ budget.category_name }}</p>
-    <p><strong>Month:</strong> {{ budget.budget_month }}</p>
+<div class="form-container">
+    <form method="post">
+        <div class="form-group readonly">
+            <label>Category:</label>
+            <p>{{ budget.category_name }}</p>
+        </div>
 
-    <label>New Amount:</label>
-    <input type="number" name="budget_amount" value="{{ budget.budget_amount }}" step="0.01" required><br><br>
+        <div class="form-group readonly">
+            <label>Budget Month:</label>
+            <p>{{ budget.budget_month }}</p>
+        </div>
 
-    <label>Alert Threshold %:</label>
-    <input type="number" name="alert_threshold" value="{{ budget.alert_threshold }}" min="50" max="100"><br><br>
+        <div class="form-group">
+            <label>New Amount ($):</label>
+            <input type="number" name="budget_amount" value="{{ budget.budget_amount }}" step="0.01" required>
+        </div>
 
-    <button type="submit">Update Budget</button>
-</form>
+        <div class="form-group">
+            <label>Alert Threshold (%):</label>
+            <input type="number" name="alert_threshold" value="{{ budget.alert_threshold }}" min="50" max="100">
+        </div>
 
-<br>
-<a href="/budgets">← Back to Budgets</a>
+        <button type="submit" class="primary-btn">💾 Update Budget</button>
+    </form>
+
+    <a href="/budgets" class="btn-link">← Back to Budgets</a>
+</div>
+
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: auto;
+        padding: 30px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group.readonly p {
+        background: #f9f9f9;
+        padding: 10px;
+        border-radius: 6px;
+        margin-top: 4px;
+        border: 1px solid #ddd;
+    }
+
+    label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+    }
+
+    input:focus {
+        border-color: #1976d2;
+        outline: none;
+    }
+
+    .primary-btn {
+        background-color: #1976d2;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .primary-btn:hover {
+        background-color: #125aa0;
+    }
+
+    .btn-link {
+        display: inline-block;
+        margin-top: 20px;
+        text-decoration: none;
+        padding: 8px 14px;
+        border: 1px solid #1976d2;
+        border-radius: 8px;
+        color: #1976d2;
+        transition: 0.2s ease;
+    }
+
+    .btn-link:hover {
+        background-color: #1976d2;
+        color: #fff;
+    }
+</style>
 {% endblock %}

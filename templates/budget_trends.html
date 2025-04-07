@@ -5,7 +5,8 @@
 {% block content %}
 <h1>📈 Budget Trends</h1>
 
-<table border="1" cellpadding="8">
+<div class="table-responsive">
+<table class="styled-table">
     <thead>
         <tr>
             <th>Month</th>
@@ -24,19 +25,58 @@
             <td>${{ "%.2f"|format(row.budget_amount) }}</td>
             <td>${{ "%.2f"|format(row.total_spent or 0) }}</td>
             <td style="color:
-                {% if usage>
-                90 %}red
-                {% elif usage > 70 %}orange
-                {% else %}green{% endif %};">
+                {% if usage > 90 %}#e53935
+                {% elif usage > 70 %}#f57c00
+                {% else %}#43a047{% endif %};
+                font-weight: bold;">
                 {{ "%.1f"|format(usage) }}%
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="5">No budget trend data available.</td></tr>
+        <tr><td colspan="5" style="text-align:center;">No budget trend data available.</td></tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
 
 <br>
-<a href="/budgets">← Back to Budgets</a>
+<a href="/budgets" class="back-link">← Back to Budgets</a>
+
+<style>
+    .table-responsive {
+        overflow-x: auto;
+        margin-top: 20px;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+        background-color: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .styled-table th, .styled-table td {
+        padding: 12px 16px;
+        border: 1px solid #e0e0e0;
+        text-align: left;
+    }
+
+    .styled-table th {
+        background-color: #f7f7f7;
+        font-weight: 600;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 20px;
+        text-decoration: none;
+        color: #1976d2;
+        font-weight: 500;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+</style>
 {% endblock %}

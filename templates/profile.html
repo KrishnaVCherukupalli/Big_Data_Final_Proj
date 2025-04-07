@@ -1,64 +1,207 @@
 ﻿{% extends "layout.html" %}
-
 {% block title %}Profile - Expense Tracker{% endblock %}
 
 {% block content %}
-<h2>👤 User Profile</h2>
+<div class="profile-wrapper">
+  <h2 class="section-heading">👤 My Profile</h2>
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-<ul class="flash-messages">
-    {% for message in messages %}
-    <li style="color: green;">{{ message }}</li>
-    {% endfor %}
-</ul>
-  {% endif %}
-{% endwith %}
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class="flash-messages">
+      {% for message in messages %}
+      <li class="flash-success">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  {% endwith %}
 
+  <div class="profile-grid">
+    <div class="profile-info">
+      <div class="card">
+        <p><strong>Full Name:</strong><br> {{ user.full_name }}</p>
+        <p><strong>Email:</strong><br> {{ user.email }}</p>
+        <p><strong>Joined:</strong><br> {{ user.created_at.strftime('%B %d, %Y') }}</p>
+      </div>
 
-<p><strong>Full Name:</strong> {{ user.full_name }}</p>
-<p><strong>Email:</strong> {{ user.email }}</p>
-<p><strong>Account Created:</strong> {{ user.created_at.strftime('%B %d, %Y') }}</p>
+      <div class="card">
+        <h3>📊 Activity Summary</h3>
+        <ul class="activity-summary">
+          <li><strong>{{ transaction_count }}</strong> Transactions</li>
+          <li><strong>{{ budget_count }}</strong> Budgets</li>
+          <li><strong>{{ savings_count }}</strong> Savings Goals</li>
+          <li><strong>{{ account_count }}</strong> Linked Accounts</li>
+        </ul>
+        <a class="btn-outline" href="/accounts">➕ Manage Linked Accounts</a>
+      </div>
+    </div>
 
-<hr>
-<h3>📊 Activity Summary</h3>
-<ul>
-    <li>Total Transactions: {{ transaction_count }}</li>
-    <li>Budgets Created: {{ budget_count }}</li>
-    <li>Savings Goals: {{ savings_count }}</li>
-    <li>Linked Accounts: {{ account_count }}</li>
+    <div class="profile-actions">
+      <div class="card">
+        <h3>🔐 Change Password</h3>
+        <form method="POST" action="/change_password" class="modern-form">
+          <input type="password" name="current_password" placeholder="Current Password" required>
+          <input type="password" name="new_password" placeholder="New Password" required>
+          <input type="password" name="confirm_password" placeholder="Confirm New Password" required>
+          <button type="submit">Update Password</button>
+        </form>
+      </div>
 
-    <a href="/accounts">➕ Manage Linked Accounts</a>
+      <div class="card">
+        <h3>⚠️ Low Balance Alert</h3>
+        <form method="POST" action="/profile" class="modern-form">
+          <label for="low_balance_threshold">Alert Threshold ($):</label>
+          <input type="number" step="0.01" name="low_balance_threshold" value="{{ user.low_balance_threshold }}" required>
+          <button type="submit">Update Threshold</button>
+        </form>
+      </div>
 
-</ul>
+      <div class="card">
+        <h3>💱 Default Currency</h3>
+        <form action="/update_currency" method="post" class="modern-form">
+          <select name="currency" required>
+            <option value="CAD" {% if user.currency == "CAD" %}selected{% endif %}>CAD</option>
+            <option value="USD" {% if user.currency == "USD" %}selected{% endif %}>USD</option>
+            <option value="EUR" {% if user.currency == "EUR" %}selected{% endif %}>EUR</option>
+            <option value="INR" {% if user.currency == "INR" %}selected{% endif %}>INR</option>
+          </select>
+          <button type="submit">Update Currency</button>
+        </form>
+      </div>
 
-<hr>
-<h3>🔐 Change Password</h3>
-<form method="POST" action="/change_password">
-    <input type="password" name="current_password" placeholder="Current Password" required><br><br>
-    <input type="password" name="new_password" placeholder="New Password" required><br><br>
-    <input type="password" name="confirm_password" placeholder="Confirm New Password" required><br><br>
-    <button type="submit">Update Password</button>
-</form>
+      <div class="card danger-zone">
+        <h3>🗑️ Delete Account</h3>
+        <form method="POST" action="/delete_account" onsubmit="return confirm('Are you sure? This will permanently delete your account.')">
+          <button type="submit" class="danger-button">Permanently Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
-<label for="low_balance_threshold">Low Balance Alert Threshold ($):</label>
-<input type="number" step="0.01" name="low_balance_threshold" value="{{ user.low_balance_threshold }}">
+<style>
+  .profile-wrapper {
+    max-width: 1100px;
+    margin: auto;
+    padding: 30px;
+  }
 
-<hr>
-<h3 style="color: red;">⚠️ Delete Account</h3>
-<form method="POST" action="/delete_account" onsubmit="return confirm('Are you sure? This will permanently delete your account.')">
-    <button type="submit" style="color: red;">Delete Account</button>
-</form>
+  .section-heading {
+    margin-bottom: 25px;
+    font-size: 28px;
+    color: #333;
+  }
 
-<h2>Set Default Currency</h2>
-<form action="/update_currency" method="post">
-    <select name="currency">
-        <option value="CAD" {% if user.currency == "CAD" %}selected{% endif %}>CAD</option>
-        <option value="USD" {% if user.currency == "USD" %}selected{% endif %}>USD</option>
-        <option value="EUR" {% if user.currency == "EUR" %}selected{% endif %}>EUR</option>
-        <option value="INR" {% if user.currency == "INR" %}selected{% endif %}>INR</option>
-        <!-- Add more if needed -->
-    </select>
-    <button type="submit">Update Currency</button>
-</form>
+  .flash-messages {
+    padding: 0;
+    list-style: none;
+  }
+
+  .flash-success {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
+  .profile-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+  }
+
+  .profile-info,
+  .profile-actions {
+    flex: 1;
+    min-width: 320px;
+  }
+
+  .card {
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+
+  .card h3 {
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+
+  .activity-summary {
+    padding-left: 20px;
+    line-height: 1.8;
+    margin-bottom: 10px;
+  }
+
+  .btn-outline {
+    display: inline-block;
+    padding: 10px 16px;
+    border: 1px solid #007BFF;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #007BFF;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+
+  .btn-outline:hover {
+    background: #007BFF;
+    color: white;
+  }
+
+  .modern-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .modern-form input,
+  .modern-form select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    font-size: 15px;
+  }
+
+  .modern-form button {
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .modern-form button:hover {
+    background-color: #218838;
+  }
+
+  .danger-zone {
+    border-left: 5px solid #e74c3c;
+  }
+
+  .danger-button {
+    background-color: #e74c3c;
+    padding: 10px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .danger-button:hover {
+    background-color: #c0392b;
+  }
+
+  @media (max-width: 768px) {
+    .profile-grid {
+      flex-direction: column;
+    }
+  }
+</style>
 {% endblock %}
