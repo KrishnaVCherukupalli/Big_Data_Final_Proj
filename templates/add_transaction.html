@@ -32,13 +32,11 @@
     <label>Receipt Upload (PNG/JPG/PDF):</label>
     <input type="file" name="receipt_file"><br><br>
 
-    <label>Account:</label>
-    <select name="account_id" required>
-        {% for a in accounts %}
-        <option value="{{ a.account_id }}"
-                {% if a.account_name=='Default Account' %}selected{% endif %}>
-            {{ a.account_name }}
-        </option>
+    <label>Account (optional):</label>
+    <select name="account_id">
+        <option value="">-- None --</option>
+        {% for acc in accounts %}
+        <option value="{{ acc.account_id }}">{{ acc.account_name }}</option>
         {% endfor %}
     </select><br><br>
 
@@ -64,5 +62,49 @@
 
         categorySelect.value = "";
     }
+
+
+    async function checkDuplicateAndSubmit(event) {
+        event.preventDefault();
+
+        const form = event.target.form;
+        const category_id = form.category_id.value;
+        const amount = form.amount.value;
+        const transaction_date = form.transaction_date.value;
+
+        // Check only if required fields are filled
+        if (!category_id || !amount || !transaction_date) {
+            alert("Please fill all required fields before submitting.");
+            return;
+        }
+
+        const response = await fetch("/check_duplicate_transaction", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                category_id: category_id,
+                amount: parseFloat(amount),
+                transaction_date: transaction_date
+            })
+        });
+
+        const data = await response.json();
+        if (data.duplicate) {
+            const confirmSubmit = confirm("A similar transaction already exists. Do you want to continue?");
+            if (!confirmSubmit) return;
+        }
+
+        form.submit();
+    }
+
+    // Replace submit button behavior
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.querySelector("form");
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.type = "button";
+        submitButton.addEventListener("click", checkDuplicateAndSubmit);
+    });
+
+
 </script>
 {% endblock %}

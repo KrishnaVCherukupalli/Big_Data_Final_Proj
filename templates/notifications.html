@@ -49,6 +49,31 @@
                 {% endif %}
                 <a href="/delete_notification/{{ n.notification_id }}" onclick="return confirm('Delete this notification?');">🗑 Delete</a>
             </td>
+            <td>
+                {% if n.notification_type == 'low_balance' and not n.is_read %}
+                    <strong style="color:#e53935;">{{ n.message }}</strong>
+                {% else %}
+                    {{ n.message }}
+                {% endif %}
+            </td>
+            <td>
+                <span style="padding:4px 8px; border-radius:8px; background-color:
+                    {% if n.notification_type == 'low_balance' %}#ffcccb
+                    {% elif n.notification_type == 'budget_alert' %}#ffe082
+                    {% elif n.notification_type == 'bill_reminder' %}#b3e5fc
+                    {% elif n.notification_type == 'subscription_renewal' %}#d1c4e9
+                    {% elif n.notification_type == 'goal_reached' %}#c8e6c9
+                    {% elif n.notification_type == 'debt_reminder' %}#f8bbd0
+                    {% else %}#e0e0e0
+                    {% endif %};">{{ n.notification_type.replace('_', ' ')|title }}</span>
+            </td>
+            <td>
+                {% if n.notification_type == 'low_balance' and not n.is_read %}
+                    <strong style="color:#e53935;">{{ n.message }}</strong>
+                {% else %}
+                    {{ n.message }}
+                {% endif %}
+            </td>            
         </tr>
         {% else %}
         <tr><td colspan="5">No notifications found.</td></tr>

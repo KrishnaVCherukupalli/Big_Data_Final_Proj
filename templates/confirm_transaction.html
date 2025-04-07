@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}Confirm Transaction{% endblock %}
+{% block content %}
+<h2>⚠ Duplicate Transaction Found</h2>
+<p>A similar transaction with the same date, amount, and category already exists. Do you still want to save this transaction?</p>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="transaction_type" value="{{ transaction_type }}">
+    <input type="hidden" name="category_id" value="{{ category_id }}">
+    <input type="hidden" name="amount" value="{{ amount }}">
+    <input type="hidden" name="transaction_date" value="{{ transaction_date }}">
+    <input type="hidden" name="description" value="{{ description }}">
+    <input type="hidden" name="account_id" value="{{ account_id }}">
+    <input type="hidden" name="confirm_duplicate" value="1">
+
+    <label>Receipt Upload (optional):</label>
+    <input type="file" name="receipt_file"><br><br>
+
+    <button type="submit">✅ Save Anyway</button>
+    <a href="/add_transaction">❌ Cancel</a>
+</form>
+{% endblock %}
