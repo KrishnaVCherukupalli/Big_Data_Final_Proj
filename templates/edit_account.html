@@ -1,0 +1,32 @@
+﻿{% extends "layout.html" %}
+
+{% block title %}Edit Account - Expense Tracker{% endblock %}
+
+{% block content %}
+<h2>✏️ Edit Linked Account</h2>
+
+<form method="POST">
+    <label>Account Name:</label><br>
+    <input type="text" name="account_name" value="{{ acc.account_name }}" required><br><br>
+
+    <label>Account Type:</label><br>
+    <input type="text" name="account_type" value="{{ acc.account_type }}" required><br><br>
+
+    <label>Current Balance:</label><br>
+    <input type="number" name="current_balance" step="0.01" value="{{ acc.current_balance }}" required><br><br>
+
+    <label>Currency:</label><br>
+    <input type="text" name="currency" value="{{ acc.currency or 'CAD' }}"><br><br>
+
+    <label>Status:</label><br>
+    <select name="is_active">
+        <option value="1" {% if acc.is_active %}selected{% endif %}>Active</option>
+        <option value="0" {% if not acc.is_active %}selected{% endif %}>Inactive</option>
+    </select><br><br>
+
+    <button type="submit">💾 Update Account</button>
+</form>
+
+<br>
+<a href="/accounts">← Back to Linked Accounts</a>
+{% endblock %}

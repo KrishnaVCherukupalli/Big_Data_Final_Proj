@@ -5,9 +5,20 @@
 {% block content %}
 <h2>👤 User Profile</h2>
 
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+<ul class="flash-messages">
+    {% for message in messages %}
+    <li style="color: green;">{{ message }}</li>
+    {% endfor %}
+</ul>
+  {% endif %}
+{% endwith %}
+
+
 <p><strong>Full Name:</strong> {{ user.full_name }}</p>
 <p><strong>Email:</strong> {{ user.email }}</p>
-<p><strong>Account Created:</strong> {{ user.created_at }}</p>
+<p><strong>Account Created:</strong> {{ user.created_at.strftime('%B %d, %Y') }}</p>
 
 <hr>
 <h3>📊 Activity Summary</h3>
@@ -15,6 +26,10 @@
     <li>Total Transactions: {{ transaction_count }}</li>
     <li>Budgets Created: {{ budget_count }}</li>
     <li>Savings Goals: {{ savings_count }}</li>
+    <li>Linked Accounts: {{ account_count }}</li>
+
+    <a href="/accounts">➕ Manage Linked Accounts</a>
+
 </ul>
 
 <hr>

@@ -172,7 +172,9 @@ def add_transaction():
             amount = float(request.form.get("amount"))
             transaction_date = request.form.get("transaction_date")
             description = request.form.get("description", "").strip()
-            account_id = request.form.get("account_id") or None
+            account_id_raw = request.form.get("account_id")
+            account_id = int(account_id_raw) if account_id_raw else None
+
 
             if not description:
                 cursor.execute("SELECT category_name FROM categories WHERE category_id = ?", category_id)
@@ -237,7 +239,9 @@ def edit_transaction(transaction_id):
         transaction_date = request.form.get("transaction_date")
         description = request.form.get("description")
         receipt_url = request.form.get("receipt_url")
-        new_account_id = request.form.get("account_id") or None
+        new_account_id_raw = request.form.get("account_id")
+        new_account_id = int(new_account_id_raw) if new_account_id_raw else None
+
 
         with get_cursor() as cursor:
             cursor.execute("""
@@ -1097,10 +1101,14 @@ def profile():
         cursor.execute("SELECT COUNT(*) FROM savings_goals WHERE user_id = ?", (user_id,))
         savings_count = cursor.fetchone()[0]
 
+        cursor.execute("SELECT COUNT(*) FROM user_accounts WHERE user_id = ?", (user_id,))
+        account_count = cursor.fetchone()[0]
+
     return render_template('profile.html', user=user, last_login=last_login,
                            transaction_count=transaction_count,
                            budget_count=budget_count,
-                           savings_count=savings_count)
+                           savings_count=savings_count,
+                           account_count=account_count)
 
 ##-----------------Change Password route--------------------
 @app.route('/change_password', methods=['POST'])
@@ -1160,17 +1168,69 @@ def accounts():
         if request.method == 'POST':
             name = request.form['account_name']
             acc_type = request.form['account_type']
-            balance = float(request.form['balance'])
+            balance_raw = request.form.get('current_balance')
+            if not balance_raw:
+                return "Missing balance input", 400
+            balance = float(balance_raw)
+
 
             cursor.execute("""
-                INSERT INTO user_accounts (user_id, account_name, account_type, balance)
+                INSERT INTO user_accounts (user_id, account_name, account_type, current_balance)
                 VALUES (?, ?, ?, ?)""", (user_id, name, acc_type, balance))
             return redirect('/accounts')
 
-        cursor.execute("SELECT account_id, account_name, account_type, balance FROM user_accounts WHERE user_id = ?", (user_id,))
+        cursor.execute("SELECT account_id, account_name, account_type, current_balance FROM user_accounts WHERE user_id = ?", (user_id,))
         accounts = cursor.fetchall()
 
     return render_template('accounts.html', accounts=accounts)
+
+##----edit linked accounts-------------------------
+@app.route('/edit_account/<int:account_id>', methods=['GET', 'POST'])
+@login_required
+def edit_account(account_id):
+    user_id = session['user_id']
+    with get_cursor() as cursor:
+        if request.method == "POST":
+            name = request.form['account_name']
+            acc_type = request.form['account_type']
+            balance = float(request.form['current_balance'])
+            currency = request.form.get('currency', 'CAD')
+            is_active = int(request.form['is_active'])
+
+            cursor.execute("""
+                UPDATE user_accounts 
+                SET account_name = ?, account_type = ?, current_balance = ?, currency = ?, is_active = ?
+                WHERE account_id = ? AND user_id = ?
+            """, name, acc_type, balance, currency, is_active, account_id, user_id)
+
+            return redirect("/accounts")
+
+        cursor.execute("SELECT * FROM user_accounts WHERE account_id = ? AND user_id = ?", account_id, user_id)
+        acc = cursor.fetchone()
+
+    return render_template("edit_account.html", acc=acc)
+
+##------delete linked account----------------
+
+@app.route('/delete_linked_account/<int:account_id>')
+@login_required
+def delete_linked_account(account_id):
+    user_id = session['user_id']
+    with get_cursor() as cursor:
+        # Check if transactions exist
+        cursor.execute("""
+            SELECT COUNT(*) FROM transactions WHERE account_id = ? AND user_id = ?
+        """, account_id, user_id)
+        count = cursor.fetchone()[0]
+        if count > 0:
+            session["alert"] = "⚠️ Cannot delete account with linked transactions."
+            return redirect("/accounts")
+
+        cursor.execute("""
+            DELETE FROM user_accounts WHERE account_id = ? AND user_id = ?
+        """, account_id, user_id)
+
+    return redirect("/accounts")
 
 
 
