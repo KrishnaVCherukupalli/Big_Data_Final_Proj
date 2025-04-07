@@ -95,8 +95,9 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    session.clear()
+    alert = session.pop("alert", None)
     if request.method == "POST":
+        session.clear()
         email = request.form.get("email")
         password = request.form.get("password")
 
@@ -110,7 +111,7 @@ def login():
             session["user_id"] = row.user_id
         return redirect("/transactions")
 
-    return render_template("welcome.html")
+    return render_template("welcome.html", alert=alert)
 
 @app.route("/logout")
 def logout():
