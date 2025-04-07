@@ -74,7 +74,7 @@
     <tbody>
         {% for r in recurring %}
         <tr>
-            <td>{{ r.category_id }}</td>
+            <td>{{ r.category_name }}</td>
             <td>${{ "%.2f"|format(r.amount) }}</td>
             <td>{{ r.frequency }}</td>
             <td>{{ r.start_date }}</td>
