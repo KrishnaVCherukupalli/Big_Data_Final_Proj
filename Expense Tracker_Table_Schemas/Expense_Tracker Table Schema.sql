@@ -35,7 +35,8 @@ CREATE TABLE users (
     currency VARCHAR(10) DEFAULT 'CAD',
     email_verified  BIT DEFAULT 0,
     two_factor_enabled  BIT DEFAULT 0,
-    created_at DATETIME DEFAULT GETDATE()
+    created_at DATETIME DEFAULT GETDATE(),
+    low_balance_threshold DECIMAL(10,2) DEFAULT 100.00
 );
 
 -- To track active logins
