@@ -172,7 +172,9 @@ def add_transaction():
             amount = float(request.form.get("amount"))
             transaction_date = request.form.get("transaction_date")
             description = request.form.get("description", "").strip()
-            account_id = request.form.get("account_id") or None
+            account_id_raw = request.form.get("account_id")
+            account_id = int(account_id_raw) if account_id_raw else None
+
 
             if not description:
                 cursor.execute("SELECT category_name FROM categories WHERE category_id = ?", category_id)
@@ -237,7 +239,9 @@ def edit_transaction(transaction_id):
         transaction_date = request.form.get("transaction_date")
         description = request.form.get("description")
         receipt_url = request.form.get("receipt_url")
-        new_account_id = request.form.get("account_id") or None
+        new_account_id_raw = request.form.get("account_id")
+        new_account_id = int(new_account_id_raw) if new_account_id_raw else None
+
 
         with get_cursor() as cursor:
             cursor.execute("""
@@ -1097,10 +1101,14 @@ def profile():
         cursor.execute("SELECT COUNT(*) FROM savings_goals WHERE user_id = ?", (user_id,))
         savings_count = cursor.fetchone()[0]
 
+        cursor.execute("SELECT COUNT(*) FROM user_accounts WHERE user_id = ?", (user_id,))
+        account_count = cursor.fetchone()[0]
+
     return render_template('profile.html', user=user, last_login=last_login,
                            transaction_count=transaction_count,
                            budget_count=budget_count,
-                           savings_count=savings_count)
+                           savings_count=savings_count,
+                           account_count=account_count)
 
 ##-----------------Change Password route--------------------
 @app.route('/change_password', methods=['POST'])
@@ -1160,14 +1168,18 @@ def accounts():
         if request.method == 'POST':
             name = request.form['account_name']
             acc_type = request.form['account_type']
-            balance = float(request.form['balance'])
+            balance_raw = request.form.get('current_balance')
+            if not balance_raw:
+                return "Missing balance input", 400
+            balance = float(balance_raw)
+
 
             cursor.execute("""
-                INSERT INTO user_accounts (user_id, account_name, account_type, balance)
+                INSERT INTO user_accounts (user_id, account_name, account_type, current_balance)
                 VALUES (?, ?, ?, ?)""", (user_id, name, acc_type, balance))
             return redirect('/accounts')
 
-        cursor.execute("SELECT account_id, account_name, account_type, balance FROM user_accounts WHERE user_id = ?", (user_id,))
+        cursor.execute("SELECT account_id, account_name, account_type, current_balance FROM user_accounts WHERE user_id = ?", (user_id,))
         accounts = cursor.fetchall()
 
     return render_template('accounts.html', accounts=accounts)
