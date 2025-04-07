@@ -95,6 +95,9 @@ def register():
                 name, email, hashed_pw, recovery_hint
             )
 
+            cursor.execute("SELECT user_id FROM users WHERE email = ?", email)
+            user_id = cursor.fetchone().user_id
+
             cursor.execute("""
                 INSERT INTO user_accounts (user_id, account_name, account_type, current_balance)
                 VALUES (?, 'Default Account', 'General', 0)
@@ -183,9 +186,13 @@ def add_transaction():
             amount = float(request.form.get("amount"))
             transaction_date = request.form.get("transaction_date")
             description = request.form.get("description", "").strip()
-            account_id_raw = request.form.get("account_id")
-            account_id = int(account_id_raw) if account_id_raw else None
+            account_id = request.form.get("account_id")
 
+            if not account_id:
+                session["alert"] = "⚠️ Please select an account."
+                return redirect("/add_transaction")
+
+            account_id = int(account_id)
 
             if not description:
                 cursor.execute("SELECT category_name FROM categories WHERE category_id = ?", category_id)
