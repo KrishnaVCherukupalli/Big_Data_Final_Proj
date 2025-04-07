@@ -1,8 +1,10 @@
+
 {% extends "layout.html" %}
 
 {% block title %}Move to Savings - Expense Tracker{% endblock %}
 
 {% block content %}
+
 <div class="move-wrapper">
   <h2 class="section-title">💸 Move Remaining Budget to Savings - {{ month }}</h2>
 
@@ -13,11 +15,13 @@
       <table class="modern-table">
         <thead>
           <tr>
+
             <th>Category</th>
             <th>Budgeted</th>
             <th>Spent</th>
             <th>Remaining</th>
             <th>Move to Savings</th>
+
           </tr>
         </thead>
         <tbody>
@@ -128,4 +132,5 @@
     }
   }
 </style>
+
 {% endblock %}
