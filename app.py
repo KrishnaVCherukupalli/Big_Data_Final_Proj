@@ -169,8 +169,14 @@ def add_transaction():
             transaction_type = request.form.get("transaction_type")
             amount = float(request.form.get("amount"))
             transaction_date = request.form.get("transaction_date")
-            description = request.form.get("description")
+            description = request.form.get("description", "").strip()
             account_id = request.form.get("account_id") or None
+
+            if not description:
+                cursor.execute("SELECT category_name FROM categories WHERE category_id = ?", category_id)
+                row = cursor.fetchone()
+                description = row.category_name if row else "General"
+
 
             # Handle file upload
             receipt_url = None

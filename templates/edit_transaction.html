@@ -9,7 +9,7 @@
     <label>Category:</label><br>
     <select name="category_id" required>
         {% for c in categories %}
-        <option value="{{ c.category_id }}" {% if c.category_id= =transaction.category_id %}selected{% endif %}>
+        <option value="{{ c.category_id }}" {% if c.category_id==transaction.category_id %}selected{% endif %}>
             {{ c.category_name }}
         </option>
         {% endfor %}
@@ -17,8 +17,8 @@
 
     <label>Type:</label><br>
     <select name="transaction_type" required>
-        <option value="income" {% if transaction.transaction_type= ='income' %}selected{% endif %}>Income</option>
-        <option value="expense" {% if transaction.transaction_type= ='expense' %}selected{% endif %}>Expense</option>
+        <option value="income" {% if transaction.transaction_type=='income' %}selected{% endif %}>Income</option>
+        <option value="expense" {% if transaction.transaction_type=='expense' %}selected{% endif %}>Expense</option>
     </select><br><br>
 
     <label>Amount:</label><br>
@@ -30,14 +30,14 @@
     <label>Description:</label><br>
     <input type="text" name="description" value="{{ transaction.description }}"><br><br>
 
-    <label>Receipt URL:</label><br>
-    <input type="url" name="receipt_url" value="{{ transaction.receipt_url }}"><br><br>
+    <label>Upload New Receipt (optional):</label><br>
+    <input type="file" name="receipt_file"><br><br>
 
     <label>Account (optional):</label><br>
     <select name="account_id">
         <option value="">-- None --</option>
         {% for acc in accounts %}
-        <option value="{{ acc.account_id }}" {% if acc.account_id= =transaction.account_id %}selected{% endif %}>
+        <option value="{{ acc.account_id }}" {% if acc.account_id==transaction.account_id %}selected{% endif %}>
             {{ acc.account_name }}
         </option>
         {% endfor %}
