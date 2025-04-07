@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from contextlib import contextmanager
 from db import with_connection
 from helpers import login_required
+from flask import jsonify
+
 
 ## -------------Flask configuration ----------------
 app = Flask(__name__, template_folder="templates")
@@ -188,13 +190,9 @@ def add_transaction():
             amount = float(request.form.get("amount"))
             transaction_date = request.form.get("transaction_date")
             description = request.form.get("description", "").strip()
-            account_id = request.form.get("account_id")
+            account_id_raw = request.form.get("account_id")
+            account_id = int(account_id_raw) if account_id_raw else None
 
-            if not account_id:
-                session["alert"] = "⚠️ Please select an account."
-                return redirect("/add_transaction")
-
-            account_id = int(account_id)
 
             if not description:
                 cursor.execute("SELECT category_name FROM categories WHERE category_id = ?", category_id)
@@ -247,6 +245,32 @@ def add_transaction():
 
     categories, accounts = get_user_categories_and_accounts(user_id)
     return render_template("add_transaction.html", categories=categories, accounts=accounts)
+
+@app.route("/check_duplicate_transaction", methods=["POST"])
+@login_required
+def check_duplicate_transaction():
+    user_id = session["user_id"]
+    data = request.get_json()
+
+    try:
+        category_id = int(data.get("category_id")) if data.get("category_id") is not None else None
+        amount = float(data.get("amount")) if data.get("amount") is not None else None
+        date = data.get("transaction_date")
+
+        if not category_id or not amount or not date:
+            return jsonify({"error": "Missing required fields"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid input data"}), 400
+
+    with get_cursor() as cursor:
+        cursor.execute("""
+            SELECT COUNT(*) FROM transactions
+            WHERE user_id = ? AND category_id = ? AND transaction_date = ? AND ABS(amount - ?) < 0.01
+        """, (user_id, category_id, date, amount))
+        duplicate_count = cursor.fetchone()[0]
+
+    return jsonify({"duplicate": duplicate_count > 0})
+
 
 @app.route("/edit_transaction/<int:transaction_id>", methods=["GET", "POST"])
 @login_required
