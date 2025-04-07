@@ -188,6 +188,13 @@ def add_transaction():
             """
             cursor.execute(query, user_id, category_id, amount, transaction_type, transaction_date, description, receipt_url, account_id)
 
+            if account_id:
+                if transaction_type == "income":
+                    cursor.execute("UPDATE user_accounts SET current_balance = current_balance + ? WHERE account_id = ?", amount, account_id)
+            else:
+                cursor.execute("UPDATE user_accounts SET current_balance = current_balance - ? WHERE account_id = ?", amount, account_id)
+
+
             # Budget Alert Check (if expense)
             if transaction_type == "expense":
                 month = transaction_date[:7] + "-01"
@@ -217,21 +224,56 @@ def edit_transaction(transaction_id):
     user_id = session["user_id"]
     if request.method == "POST":
         category_id = int(request.form.get("category_id"))
-        transaction_type = request.form.get("transaction_type")
-        amount = float(request.form.get("amount"))
+        new_type = request.form.get("transaction_type")
+        new_amount = float(request.form.get("amount"))
         transaction_date = request.form.get("transaction_date")
         description = request.form.get("description")
         receipt_url = request.form.get("receipt_url")
-        account_id = request.form.get("account_id") or None
+        new_account_id = request.form.get("account_id") or None
 
         with get_cursor() as cursor:
+            cursor.execute("""
+                SELECT amount, transaction_type, account_id 
+                FROM transactions 
+                WHERE transaction_id = ? AND user_id = ?
+            """, transaction_id, user_id)
+            old = cursor.fetchone()
+
+            if old and old.account_id:
+                if old.transaction_type == "income":
+                    cursor.execute("""
+                        UPDATE user_accounts 
+                        SET current_balance = current_balance - ? 
+                        WHERE account_id = ?
+                    """, old.amount, old.account_id)
+                else:
+                    cursor.execute("""
+                        UPDATE user_accounts 
+                        SET current_balance = current_balance + ? 
+                        WHERE account_id = ?
+                    """, old.amount, old.account_id)
+
+            if new_account_id:
+                if new_type == "income":
+                    cursor.execute("""
+                        UPDATE user_accounts 
+                        SET current_balance = current_balance + ? 
+                        WHERE account_id = ?
+                    """, new_amount, new_account_id)
+                else:
+                    cursor.execute("""
+                        UPDATE user_accounts 
+                        SET current_balance = current_balance - ? 
+                        WHERE account_id = ?
+                    """, new_amount, new_account_id)
+
             cursor.execute("""
                 UPDATE transactions
                 SET category_id = ?, transaction_type = ?, amount = ?, transaction_date = ?, 
                     description = ?, receipt_url = ?, account_id = ?
                 WHERE transaction_id = ? AND user_id = ?
-            """, category_id, transaction_type, amount, transaction_date,
-                 description, receipt_url, account_id, transaction_id, user_id)
+            """, category_id, new_type, new_amount, transaction_date,
+                 description, receipt_url, new_account_id, transaction_id, user_id)
         return redirect("/transactions")
 
     with get_cursor() as cursor:
@@ -245,8 +287,37 @@ def edit_transaction(transaction_id):
 def delete_transaction(transaction_id):
     user_id = session["user_id"]
     with get_cursor() as cursor:
-        cursor.execute("DELETE FROM transactions WHERE transaction_id = ? AND user_id = ?", transaction_id, user_id)
+        # Step 1: Fetch transaction info
+        cursor.execute("""
+            SELECT amount, transaction_type, account_id 
+            FROM transactions 
+            WHERE transaction_id = ? AND user_id = ?
+        """, transaction_id, user_id)
+        txn = cursor.fetchone()
+
+        # Step 2: Adjust account balance if applicable
+        if txn and txn.account_id:
+            if txn.transaction_type == "income":
+                cursor.execute("""
+                    UPDATE user_accounts 
+                    SET current_balance = current_balance - ? 
+                    WHERE account_id = ?
+                """, txn.amount, txn.account_id)
+            else:
+                cursor.execute("""
+                    UPDATE user_accounts 
+                    SET current_balance = current_balance + ? 
+                    WHERE account_id = ?
+                """, txn.amount, txn.account_id)
+
+        # Step 3: Delete the transaction
+        cursor.execute("""
+            DELETE FROM transactions 
+            WHERE transaction_id = ? AND user_id = ?
+        """, transaction_id, user_id)
+
     return redirect("/transactions")
+
 
 @app.route("/export_transactions", methods=["POST"])
 @login_required
@@ -738,7 +809,7 @@ def bills():
             amount = float(request.form.get("amount"))
             due_date = request.form.get("due_date")
             if due_date:
-                due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
+                due_date = datetime.strptime(due_date, "%Y-%m-%d").strftime("%Y-%m-%d")
 
             cursor.execute("""
                 INSERT INTO bill_reminders (user_id, bill_name, amount, due_date)
@@ -1056,6 +1127,16 @@ def delete_account():
     user_id = session.get('user_id')
     if user_id:
         with get_cursor() as cursor:
+            cursor.execute("DELETE FROM notifications WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM savings_history WHERE goal_id IN (SELECT goal_id FROM savings_goals WHERE user_id = ?)", (user_id,))
+            cursor.execute("DELETE FROM savings_goals WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM recurring_transactions WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM bill_reminders WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM transactions WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM budgets WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM user_accounts WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM user_sessions WHERE user_id = ?", (user_id,))
+            # Finally delete the user
             cursor.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
         session.clear()
     return redirect('/register')
