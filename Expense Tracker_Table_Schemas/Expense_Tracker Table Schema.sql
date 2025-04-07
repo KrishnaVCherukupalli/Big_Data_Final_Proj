@@ -29,6 +29,7 @@ CREATE TABLE users (
     user_id INTEGER PRIMARY KEY IDENTITY(1,1),
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
+    recovery_hint VARCHAR(255) NOT NULL,
     password_hash TEXT NOT NULL, -- Hashed password
     phone_number VARCHAR(15),
     currency VARCHAR(10) DEFAULT 'CAD',

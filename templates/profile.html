@@ -46,4 +46,16 @@
 <form method="POST" action="/delete_account" onsubmit="return confirm('Are you sure? This will permanently delete your account.')">
     <button type="submit" style="color: red;">Delete Account</button>
 </form>
+
+<h2>Set Default Currency</h2>
+<form action="/update_currency" method="post">
+    <select name="currency">
+        <option value="CAD" {% if user.currency == "CAD" %}selected{% endif %}>CAD</option>
+        <option value="USD" {% if user.currency == "USD" %}selected{% endif %}>USD</option>
+        <option value="EUR" {% if user.currency == "EUR" %}selected{% endif %}>EUR</option>
+        <option value="INR" {% if user.currency == "INR" %}selected{% endif %}>INR</option>
+        <!-- Add more if needed -->
+    </select>
+    <button type="submit">Update Currency</button>
+</form>
 {% endblock %}
