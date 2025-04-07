@@ -18,13 +18,19 @@
         <th>Account Name</th>
         <th>Type</th>
         <th>Balance</th>
+        <th>Actions</th>
     </tr>
     {% for account in accounts %}
     <tr>
         <td>{{ account.account_name }}</td>
         <td>{{ account.account_type }}</td>
         <td>${{ account.current_balance }}</td>
+        <td>
+            <a href="/edit_account/{{ account.account_id }}">✏️ Edit</a> |
+            <a href="/delete_linked_account/{{ account.account_id }}" onclick="return confirm('Are you sure?');">🗑️ Delete</a>
+        </td>
     </tr>
     {% endfor %}
 </table>
+
 {% endblock %}

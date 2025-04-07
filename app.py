@@ -1184,6 +1184,54 @@ def accounts():
 
     return render_template('accounts.html', accounts=accounts)
 
+##----edit linked accounts-------------------------
+@app.route('/edit_account/<int:account_id>', methods=['GET', 'POST'])
+@login_required
+def edit_account(account_id):
+    user_id = session['user_id']
+    with get_cursor() as cursor:
+        if request.method == "POST":
+            name = request.form['account_name']
+            acc_type = request.form['account_type']
+            balance = float(request.form['current_balance'])
+            currency = request.form.get('currency', 'CAD')
+            is_active = int(request.form['is_active'])
+
+            cursor.execute("""
+                UPDATE user_accounts 
+                SET account_name = ?, account_type = ?, current_balance = ?, currency = ?, is_active = ?
+                WHERE account_id = ? AND user_id = ?
+            """, name, acc_type, balance, currency, is_active, account_id, user_id)
+
+            return redirect("/accounts")
+
+        cursor.execute("SELECT * FROM user_accounts WHERE account_id = ? AND user_id = ?", account_id, user_id)
+        acc = cursor.fetchone()
+
+    return render_template("edit_account.html", acc=acc)
+
+##------delete linked account----------------
+
+@app.route('/delete_linked_account/<int:account_id>')
+@login_required
+def delete_linked_account(account_id):
+    user_id = session['user_id']
+    with get_cursor() as cursor:
+        # Check if transactions exist
+        cursor.execute("""
+            SELECT COUNT(*) FROM transactions WHERE account_id = ? AND user_id = ?
+        """, account_id, user_id)
+        count = cursor.fetchone()[0]
+        if count > 0:
+            session["alert"] = "⚠️ Cannot delete account with linked transactions."
+            return redirect("/accounts")
+
+        cursor.execute("""
+            DELETE FROM user_accounts WHERE account_id = ? AND user_id = ?
+        """, account_id, user_id)
+
+    return redirect("/accounts")
+
 
 
 
