@@ -6,52 +6,124 @@
 <h1>📬 Bill Reminders</h1>
 
 <!-- Add Bill Form -->
-<form method="post">
-    <label>Bill Name:</label>
-    <input type="text" name="bill_name" required><br><br>
+<div class="form-card">
+    <form method="post" class="styled-form">
+        <label>Bill Name:</label>
+        <input type="text" name="bill_name" required>
 
-    <label>Amount:</label>
-    <input type="number" name="amount" step="0.01" required><br><br>
+        <label>Amount:</label>
+        <input type="number" name="amount" step="0.01" required>
 
-    <label>Due Date:</label>
-    <input type="date" name="due_date" required><br><br>
+        <label>Due Date:</label>
+        <input type="date" name="due_date" required>
 
-    <button type="submit">Add Reminder</button>
-</form>
+        <button type="submit">➕ Add Reminder</button>
+    </form>
+</div>
 
 <hr>
 
 <h2>📅 My Upcoming Bills</h2>
-<table border="1" cellpadding="8">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Amount</th>
-            <th>Due Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for bill in bills %}
-        <tr>
-            <td>{{ bill.bill_name }}</td>
-            <td>${{ "%.2f"|format(bill.amount) }}</td>
-            <td>{{ bill.due_date }}</td>
-            <td style="color: {% if bill.status == 'paid' %}green{% else %}red{% endif %};">
-                {{ bill.status|capitalize }}
-            </td>
-            <td>
-                {% if bill.status == 'pending' %}
-                <a href="/mark_bill_paid/{{ bill.bill_id }}">✔️ Mark Paid</a><br>
-                {% endif %}
-                <a href="/edit_bill/{{ bill.bill_id }}">✏️ Edit</a><br>
-                <a href="/delete_bill/{{ bill.bill_id }}" onclick="return confirm('Delete this bill?')">🗑️ Delete</a>
-            </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="5">No bills added yet.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-responsive">
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Amount</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bill in bills %}
+            <tr>
+                <td>{{ bill.bill_name }}</td>
+                <td>${{ "%.2f"|format(bill.amount) }}</td>
+                <td>{{ bill.due_date }}</td>
+                <td style="color: {% if bill.status == 'paid' %}green{% else %}red{% endif %}; font-weight: 600;">
+                    {{ bill.status|capitalize }}
+                </td>
+                <td>
+                    {% if bill.status == 'pending' %}
+                    <a href="/mark_bill_paid/{{ bill.bill_id }}">✔️ Mark Paid</a><br>
+                    {% endif %}
+                    <a href="/edit_bill/{{ bill.bill_id }}">✏️ Edit</a><br>
+                    <a href="/delete_bill/{{ bill.bill_id }}" onclick="return confirm('Delete this bill?')">🗑️ Delete</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align:center;">No bills added yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .form-card {
+        background: #fafafa;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        max-width: 500px;
+    }
+
+    .styled-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .styled-form input, .styled-form select, .styled-form button {
+        padding: 10px;
+        font-size: 0.95rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    .styled-form button {
+        background-color: #1976d2;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .styled-form button:hover {
+        background-color: #1565c0;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+        background-color: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .styled-table th, .styled-table td {
+        padding: 12px 16px;
+        border: 1px solid #e0e0e0;
+        text-align: left;
+    }
+
+    .styled-table th {
+        background-color: #f1f1f1;
+        font-weight: 600;
+    }
+
+    .styled-table a {
+        text-decoration: none;
+        color: #1976d2;
+    }
+
+    .styled-table a:hover {
+        text-decoration: underline;
+    }
+</style>
 {% endblock %}

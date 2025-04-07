@@ -3,38 +3,165 @@
 {% block title %}Welcome - Expense Tracker{% endblock %}
 
 {% block content %}
-<h1>Welcome to Expense Tracker</h1>
+<div class="auth-wrapper">
+    <!-- Register Section -->
+    <div class="auth-box">
+        <h2>New User?</h2>
+        <p>Register:</p>
+        <form action="/register" method="post">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <input type="text" name="recovery_hint" placeholder="Recovery Hint (e.g. Pet's name)" required>
+            <button type="submit">Proceed</button>
+        </form>
+    </div>
 
-<h2>Register</h2>
-<form action="/register" method="post">
-    <input type="text" name="name" placeholder="Full Name" required><br>
-    <input type="email" name="email" placeholder="Email" required><br>
-    <input type="password" name="password" placeholder="Password" required><br>
-    <input type="text" name="recovery_hint" placeholder="Recovery Hint (e.g. Pet's name)" required><br>
-    <button type="submit">Register</button>
-</form>
+    <!-- Divider -->
+    <div class="auth-divider"></div>
 
-<hr>
+    <!-- Login Section -->
+    <div class="auth-box">
+        <h2>Login:</h2>
+        <form action="/login" method="post">
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Proceed</button>
+        </form>
 
-<h2>Login</h2>
-<form action="/login" method="post">
-    <input type="email" name="email" placeholder="Email" required><br>
-    <input type="password" name="password" placeholder="Password" required><br>
-    <button type="submit">Login</button>
-</form>
+        <div class="forgot-toggle">
+            <a href="#" onclick="toggleForgotPassword(event)">Forgot Password?</a>
+        </div>
 
-<hr>
-
-<h2>Forgot Password?</h2>
-<form action="/forgot_password" method="post">
-    <input type="email" name="email" placeholder="Registered Email" required><br>
-    <input type="text" name="hint" placeholder="Enter Recovery Hint" required><br>
-    <input type="password" name="new_password" placeholder="New Password" required><br>
-    <button type="submit">Reset Password</button>
-</form>
+        <div id="forgot-password-form" class="forgot-form">
+            <h3>Reset Password</h3>
+            <form action="/forgot_password" method="post">
+                <input type="email" name="email" placeholder="Registered Email" required>
+                <input type="text" name="hint" placeholder="Enter Recovery Hint" required>
+                <input type="password" name="new_password" placeholder="New Password" required>
+                <button type="submit">Reset Password</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 {% if alert %}
-<div style="color: green; font-weight: bold;">{{ alert }}</div>
+<div style="color: green; font-weight: bold; text-align: center;">{{ alert }}</div>
 {% endif %}
 
+<!-- Animation Script -->
+<script>
+    function toggleForgotPassword(e) {
+        e.preventDefault();
+        const form = document.getElementById('forgot-password-form');
+        form.classList.toggle('show');
+    }
+</script>
+
+<!-- Modern CSS Styling -->
+<style>
+    .auth-wrapper {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 40px;
+        padding: 1rem;
+        max-width: 1100px;
+        margin: auto;
+        flex-wrap: nowrap;
+        
+    }
+
+    .auth-box {
+        flex: 1;
+        min-width: 420px;
+        max-width: 480px;
+        background-color: var(--card-bg);
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .auth-divider {
+        width: 2px;
+        background-color: #ccc;
+    }
+
+    .auth-box h2, .auth-box h3 {
+        margin-bottom: 1rem;
+        color: var(--text-color);
+    }
+
+    .auth-box form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .auth-box input, .auth-box select, .auth-box button {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        outline: none;
+        background-color: var(--card-bg);
+        color: var(--text-color);
+    }
+
+    .auth-box button {
+        background-color: #007bff;
+        color: white;
+        font-weight: bold;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+
+    .auth-box button:hover {
+        background-color: #0056b3;
+    }
+
+    .forgot-toggle {
+        margin-top: 1rem;
+        text-align: right;
+    }
+
+    .forgot-toggle a {
+        color: var(--link-color);
+        text-decoration: none;
+        font-size: 0.95rem;
+    }
+
+    .forgot-form {
+        margin-top: 1rem;
+        display: none;
+        animation: slideDown 0.4s ease forwards;
+    }
+
+    .forgot-form.show {
+        display: block;
+    }
+
+    @keyframes slideDown {
+        0% {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .auth-wrapper {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .auth-divider {
+            display: none;
+        }
+    }
+</style>
 {% endblock %}

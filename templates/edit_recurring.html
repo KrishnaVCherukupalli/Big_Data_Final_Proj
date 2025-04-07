@@ -5,61 +5,150 @@
 {% block content %}
 <h1>✏️ Edit Recurring Transaction</h1>
 
-<form method="post">
-    <label>Category:</label><br>
-    <select name="category_id" required>
-        {% for c in categories %}
-        <option value="{{ c.category_id }}" {% if c.category_id==r.category_id %}selected{% endif %}>
-            {{ c.category_name }}
-        </option>
-        {% endfor %}
-    </select><br><br>
+<div class="form-container">
+    <form method="post">
+        <div class="form-group">
+            <label>Category:</label>
+            <select name="category_id" required>
+                {% for c in categories %}
+                <option value="{{ c.category_id }}" {% if c.category_id==r.category_id %}selected{% endif %}>
+                    {{ c.category_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <label>Type:</label><br>
-    <select name="transaction_type">
-        <option value="income" {% if r.transaction_type=='income' %}selected{% endif %}>Income</option>
-        <option value="expense" {% if r.transaction_type=='expense' %}selected{% endif %}>Expense</option>
-    </select><br><br>
+        <div class="form-group">
+            <label>Type:</label>
+            <select name="transaction_type">
+                <option value="income" {% if r.transaction_type=='income' %}selected{% endif %}>Income</option>
+                <option value="expense" {% if r.transaction_type=='expense' %}selected{% endif %}>Expense</option>
+            </select>
+        </div>
 
-    <label>Amount:</label><br>
-    <input type="number" name="amount" value="{{ r.amount }}" step="0.01" required><br><br>
+        <div class="form-group">
+            <label>Amount:</label>
+            <input type="number" name="amount" value="{{ r.amount }}" step="0.01" required>
+        </div>
 
-    <label>Frequency:</label><br>
-    <select name="frequency">
-        <option value="daily" {% if r.frequency=='daily' %}selected{% endif %}>Daily</option>
-        <option value="weekly" {% if r.frequency=='weekly' %}selected{% endif %}>Weekly</option>
-        <option value="monthly" {% if r.frequency=='monthly' %}selected{% endif %}>Monthly</option>
-        <option value="yearly" {% if r.frequency=='yearly' %}selected{% endif %}>Yearly</option>
-    </select><br><br>
+        <div class="form-group">
+            <label>Frequency:</label>
+            <select name="frequency">
+                <option value="daily" {% if r.frequency=='daily' %}selected{% endif %}>Daily</option>
+                <option value="weekly" {% if r.frequency=='weekly' %}selected{% endif %}>Weekly</option>
+                <option value="monthly" {% if r.frequency=='monthly' %}selected{% endif %}>Monthly</option>
+                <option value="yearly" {% if r.frequency=='yearly' %}selected{% endif %}>Yearly</option>
+            </select>
+        </div>
 
-    <label>Start Date:</label><br>
-    <input type="date" name="start_date" value="{{ r.start_date }}" required><br><br>
+        <div class="form-group">
+            <label>Start Date:</label>
+            <input type="date" name="start_date" value="{{ r.start_date }}" required>
+        </div>
 
-    <label>End Date (optional):</label><br>
-    <input type="date" name="end_date" value="{{ r.end_date or '' }}"><br><br>
+        <div class="form-group">
+            <label>End Date (optional):</label>
+            <input type="date" name="end_date" value="{{ r.end_date or '' }}">
+        </div>
 
-    <label>Description:</label><br>
-    <input type="text" name="description" value="{{ r.description }}"><br><br>
+        <div class="form-group">
+            <label>Description:</label>
+            <input type="text" name="description" value="{{ r.description }}">
+        </div>
 
-    <label>Account (optional):</label><br>
-    <select name="account_id">
-        <option value="">-- None --</option>
-        {% for a in accounts %}
-        <option value="{{ a.account_id }}" {% if a.account_id==r.account_id %}selected{% endif %}>
-            {{ a.account_name }}
-        </option>
-        {% endfor %}
-    </select><br><br>
+        <div class="form-group">
+            <label>Account (optional):</label>
+            <select name="account_id">
+                <option value="">-- None --</option>
+                {% for a in accounts %}
+                <option value="{{ a.account_id }}" {% if a.account_id==r.account_id %}selected{% endif %}>
+                    {{ a.account_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <label>Status:</label><br>
-    <select name="is_active">
-        <option value="1" {% if r.is_active %}selected{% endif %}>Active</option>
-        <option value="0" {% if not r.is_active %}selected{% endif %}>Paused</option>
-    </select><br><br>
+        <div class="form-group">
+            <label>Status:</label>
+            <select name="is_active">
+                <option value="1" {% if r.is_active %}selected{% endif %}>Active</option>
+                <option value="0" {% if not r.is_active %}selected{% endif %}>Paused</option>
+            </select>
+        </div>
 
-    <button type="submit">💾 Update</button>
-</form>
+        <button type="submit" class="primary-btn">💾 Update</button>
+    </form>
 
-<br>
-<a href="/recurring">← Back to Recurring</a>
+    <a class="btn-link" href="/recurring">← Back to Recurring</a>
+</div>
+
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: auto;
+        padding: 30px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border 0.2s ease;
+    }
+
+    input:focus,
+    select:focus {
+        border-color: #1976d2;
+        outline: none;
+    }
+
+    .primary-btn {
+        background-color: #1976d2;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .primary-btn:hover {
+        background-color: #1565c0;
+    }
+
+    .btn-link {
+        display: inline-block;
+        margin-top: 20px;
+        text-decoration: none;
+        padding: 8px 14px;
+        border: 1px solid #1976d2;
+        border-radius: 8px;
+        color: #1976d2;
+        transition: 0.2s ease;
+    }
+
+    .btn-link:hover {
+        background-color: #1976d2;
+        color: #fff;
+    }
+</style>
 {% endblock %}

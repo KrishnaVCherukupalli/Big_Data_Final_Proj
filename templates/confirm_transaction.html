@@ -1,22 +1,85 @@
 {% extends "layout.html" %}
 {% block title %}Confirm Transaction{% endblock %}
+
 {% block content %}
-<h2>⚠ Duplicate Transaction Found</h2>
-<p>A similar transaction with the same date, amount, and category already exists. Do you still want to save this transaction?</p>
+<div class="confirm-container">
+    <h2 style="color: #e53935;">⚠ Duplicate Transaction Found</h2>
+    <p>A similar transaction with the same date, amount, and category already exists.</p>
+    <p style="margin-bottom: 20px;">Are you sure you want to save this transaction anyway?</p>
 
-<form method="post" enctype="multipart/form-data">
-    <input type="hidden" name="transaction_type" value="{{ transaction_type }}">
-    <input type="hidden" name="category_id" value="{{ category_id }}">
-    <input type="hidden" name="amount" value="{{ amount }}">
-    <input type="hidden" name="transaction_date" value="{{ transaction_date }}">
-    <input type="hidden" name="description" value="{{ description }}">
-    <input type="hidden" name="account_id" value="{{ account_id }}">
-    <input type="hidden" name="confirm_duplicate" value="1">
+    <form method="post" enctype="multipart/form-data" class="confirm-form">
+        <input type="hidden" name="transaction_type" value="{{ transaction_type }}">
+        <input type="hidden" name="category_id" value="{{ category_id }}">
+        <input type="hidden" name="amount" value="{{ amount }}">
+        <input type="hidden" name="transaction_date" value="{{ transaction_date }}">
+        <input type="hidden" name="description" value="{{ description }}">
+        <input type="hidden" name="account_id" value="{{ account_id }}">
+        <input type="hidden" name="confirm_duplicate" value="1">
 
-    <label>Receipt Upload (optional):</label>
-    <input type="file" name="receipt_file"><br><br>
+        <label>Receipt Upload (optional):</label><br>
+        <input type="file" name="receipt_file"><br><br>
 
-    <button type="submit">✅ Save Anyway</button>
-    <a href="/add_transaction">❌ Cancel</a>
-</form>
+        <div class="button-group">
+            <button type="submit" class="btn-confirm">✅ Save Anyway</button>
+            <a href="/add_transaction" class="btn-cancel">❌ Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .confirm-container {
+        background-color: #fff;
+        padding: 30px;
+        max-width: 600px;
+        margin: auto;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .confirm-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .confirm-form input[type="file"] {
+        padding: 5px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .btn-confirm, .btn-cancel {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .btn-confirm {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .btn-cancel {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .btn-cancel:hover, .btn-confirm:hover {
+        opacity: 0.9;
+    }
+
+    @media (max-width: 600px) {
+        .button-group {
+            flex-direction: column;
+        }
+    }
+</style>
 {% endblock %}

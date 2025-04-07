@@ -4,47 +4,51 @@
 {% block content %}
 <h1>➕ Add Transaction</h1>
 
-<form method="post" enctype="multipart/form-data">
-    <label>Type:</label>
-    <select name="transaction_type" id="transaction_type" required onchange="filterCategories()">
-        <option value="">Select Type</option>
-        <option value="income">Income</option>
-        <option value="expense">Expense</option>
-    </select><br><br>
+<div class="form-card">
+    <form method="post" enctype="multipart/form-data" class="styled-form">
+        <label>Type:</label>
+        <select name="transaction_type" id="transaction_type" required onchange="filterCategories()">
+            <option value="">Select Type</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+        </select>
 
-    <label>Category:</label>
-    <select name="category_id" id="category_id" required>
-        <option value="">-- Select Category --</option>
-        {% for c in categories %}
-        <option value="{{ c.category_id }}" data-type="{{ c.category_type }}">{{ c.category_name }}</option>
-        {% endfor %}
-    </select><br><br>
+        <label>Category:</label>
+        <select name="category_id" id="category_id" required>
+            <option value="">-- Select Category --</option>
+            {% for c in categories %}
+            <option value="{{ c.category_id }}" data-type="{{ c.category_type }}">{{ c.category_name }}</option>
+            {% endfor %}
+        </select>
 
-    <label>Amount:</label>
-    <input type="number" name="amount" step="0.01" required><br><br>
+        <label>Amount:</label>
+        <input type="number" name="amount" step="0.01" required>
 
-    <label>Date:</label>
-    <input type="date" name="transaction_date" required><br><br>
+        <label>Date:</label>
+        <input type="date" name="transaction_date" required>
 
-    <label>Description:</label>
-    <input type="text" name="description"><br><br>
+        <label>Description:</label>
+        <input type="text" name="description">
 
-    <label>Receipt Upload (PNG/JPG/PDF):</label>
-    <input type="file" name="receipt_file"><br><br>
+        <label>Receipt Upload (PNG/JPG/PDF):</label>
+        <input type="file" name="receipt_file">
 
-    <label>Account (optional):</label>
-    <select name="account_id">
-        <option value="">-- None --</option>
-        {% for acc in accounts %}
-        <option value="{{ acc.account_id }}">{{ acc.account_name }}</option>
-        {% endfor %}
-    </select><br><br>
+        <label>Account (optional):</label>
+        <select name="account_id">
+            <option value="">-- None --</option>
+            {% for acc in accounts %}
+            <option value="{{ acc.account_id }}">{{ acc.account_name }}</option>
+            {% endfor %}
+        </select>
 
-    <button type="submit">💾 Save Transaction</button>
-</form>
+        <button type="button" onclick="checkDuplicateAndSubmit(event)">💾 Save Transaction</button>
+    </form>
+</div>
+
 <br>
 <a href="/transactions">← Back to Transactions</a>
 
+<!-- JavaScript -->
 <script>
     function filterCategories() {
         const selectedType = document.getElementById("transaction_type").value;
@@ -53,26 +57,19 @@
 
         for (let i = 0; i < options.length; i++) {
             const type = options[i].getAttribute("data-type");
-            if (!type || selectedType === "") {
-                options[i].style.display = "";
-            } else {
-                options[i].style.display = (type === selectedType) ? "" : "none";
-            }
+            options[i].style.display = (!type || selectedType === "") ? "" : (type === selectedType ? "" : "none");
         }
 
         categorySelect.value = "";
     }
 
-
     async function checkDuplicateAndSubmit(event) {
         event.preventDefault();
-
         const form = event.target.form;
         const category_id = form.category_id.value;
         const amount = form.amount.value;
         const transaction_date = form.transaction_date.value;
 
-        // Check only if required fields are filled
         if (!category_id || !amount || !transaction_date) {
             alert("Please fill all required fields before submitting.");
             return;
@@ -97,14 +94,49 @@
         form.submit();
     }
 
-    // Replace submit button behavior
     document.addEventListener("DOMContentLoaded", () => {
-        const form = document.querySelector("form");
-        const submitButton = form.querySelector('button[type="submit"]');
-        submitButton.type = "button";
-        submitButton.addEventListener("click", checkDuplicateAndSubmit);
+        filterCategories();
     });
-
-
 </script>
+
+<!-- Styles -->
+<style>
+    .form-card {
+        background: #fff;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+    }
+
+    .styled-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .styled-form label {
+        font-weight: bold;
+    }
+
+    .styled-form input,
+    .styled-form select,
+    .styled-form button {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+
+    .styled-form button {
+        background-color: #1976d2;
+        color: #fff;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .styled-form button:hover {
+        background-color: #1565c0;
+    }
+</style>
 {% endblock %}

@@ -5,25 +5,85 @@
 {% block content %}
 <h1>📜 Contribution History</h1>
 
-<table border="1" cellpadding="8">
-    <thead>
-        <tr>
-            <th>Amount</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for h in history %}
-        <tr>
-            <td>${{ "%.2f"|format(h.amount) }}</td>
-            <td>{{ h.contribution_date }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="2">No contributions found.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="history-container">
+    <div class="table-responsive">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Amount</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in history %}
+                <tr>
+                    <td>${{ "%.2f"|format(h.amount) }}</td>
+                    <td>{{ h.contribution_date }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="2">No contributions found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-<br>
-<a href="/savings">← Back to Savings</a>
+    <div class="mt-2">
+        <a href="/savings" class="btn-link">← Back to Savings</a>
+    </div>
+</div>
+
+<style>
+    .history-container {
+        max-width: 800px;
+        margin: auto;
+        padding-top: 1rem;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        margin-top: 1rem;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: var(--card-bg);
+    }
+
+    .styled-table th, .styled-table td {
+        padding: 10px 14px;
+        border: 1px solid #ccc;
+    }
+
+    .styled-table th {
+        background-color: #f1f1f1;
+        color: #333;
+    }
+
+    body.dark .styled-table th {
+        background-color: #2a2a2a;
+        color: #ccc;
+    }
+
+    .btn-link {
+        display: inline-block;
+        margin-top: 20px;
+        color: var(--link-color);
+        font-weight: bold;
+        text-decoration: none;
+        padding: 6px 12px;
+        border: 1px solid var(--link-color);
+        border-radius: 8px;
+    }
+
+    .btn-link:hover {
+        background-color: var(--link-color);
+        color: white;
+    }
+
+    .mt-2 {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+</style>
 {% endblock %}

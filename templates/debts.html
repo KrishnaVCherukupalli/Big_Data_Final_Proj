@@ -1,36 +1,52 @@
 {% extends "layout.html" %}
 {% block title %}Debts{% endblock %}
-{% block content %}
 
+{% block content %}
 <h2>💳 My Debts</h2>
 
-<form method="POST">
-    <input name="lender_name" placeholder="Lender Name" required>
-    <input name="total_amount" type="number" step="0.01" placeholder="Total Amount" required>
-    <input name="paid_amount" type="number" step="0.01" placeholder="Paid Amount">
-    <input name="interest_rate" type="number" step="0.01" placeholder="Interest Rate %">
-    <input name="due_date" type="date" required>
-    <button type="submit">Add Debt</button>
-</form>
+<!-- Add Debt Form -->
+<div class="form-card">
+    <form method="POST" class="styled-form">
+        <input name="lender_name" placeholder="Lender Name" required>
+        <input name="total_amount" type="number" step="0.01" placeholder="Total Amount" required>
+        <input name="paid_amount" type="number" step="0.01" placeholder="Paid Amount">
+        <input name="interest_rate" type="number" step="0.01" placeholder="Interest Rate %">
+        <input name="due_date" type="date" required>
+        <button type="submit">➕ Add Debt</button>
+    </form>
+</div>
 
 <hr>
 
-<table border="1" cellpadding="8">
+<!-- Debt Table -->
+<table class="styled-table">
     <thead>
-        <tr><th>Lender</th><th>Total</th><th>Paid</th><th>Interest</th><th>Due</th><th>Progress</th><th>Actions</th></tr>
+        <tr>
+            <th>Lender</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Interest</th>
+            <th>Due</th>
+            <th>Progress</th>
+            <th>Actions</th>
+        </tr>
     </thead>
     <tbody>
         {% for d in debts %}
+        {% set progress = (d.paid_amount / d.total_amount * 100) if d.total_amount else 0 %}
         <tr>
             <td>{{ d.lender_name }}</td>
             <td>${{ "%.2f"|format(d.total_amount) }}</td>
-            <td>${{ "%.2f"|format(d.paid_amount) }}</td>
+            <td>${{ "%.2f"|format(d.paid_amount or 0) }}</td>
             <td>{{ d.interest_rate or 0 }}%</td>
             <td>{{ d.due_date.strftime('%Y-%m-%d') }}</td>
             <td>
-                {% set progress = (d.paid_amount / d.total_amount * 100) if d.total_amount else 0 %}
-                <progress value="{{ progress|round(0) }}" max="100"></progress>
-                {{ progress|round(1) }}%
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: {{ progress|round(1) }}%;
+                        background-color: {% if progress >= 100 %}green{% elif progress >= 70 %}orange{% else %}red{% endif %};">
+                        {{ progress|round(1) }}%
+                    </div>
+                </div>
             </td>
             <td>
                 <a href="/edit_debt/{{ d.debt_id }}">✏️ Edit</a> |
@@ -43,4 +59,83 @@
     </tbody>
 </table>
 
+<!-- Styles -->
+<style>
+    .form-card {
+        background: #fff;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        max-width: 700px;
+        margin-bottom: 20px;
+    }
+
+    .styled-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .styled-form input {
+        flex: 1 1 220px;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+
+    .styled-form button {
+        background-color: #1976d2;
+        color: #fff;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .styled-form button:hover {
+        background-color: #1565c0;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .styled-table th,
+    .styled-table td {
+        padding: 12px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .styled-table th {
+        background-color: #f5f5f5;
+    }
+
+    .progress-container {
+        background-color: #e0e0e0;
+        border-radius: 6px;
+        overflow: hidden;
+        height: 22px;
+    }
+
+    .progress-bar {
+        height: 100%;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+        line-height: 22px;
+    }
+
+    a {
+        color: #1976d2;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+</style>
 {% endblock %}
