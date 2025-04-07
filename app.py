@@ -30,8 +30,8 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 def get_connection():
     return pyodbc.connect(
-        'DRIVER={SQL Server};'
-        'SERVER=PHANI\\PKM01;'  # change as needed
+        'DRIVER={ODBC Driver 17 for SQL Server};'
+        'SERVER=DESKTOP-FB8BVHB\PRSQL;'  # change as needed
         'DATABASE=Expense_Tracker;'
         'Trusted_Connection=yes;'
     )
@@ -85,9 +85,14 @@ def register():
             if cursor.fetchone():
                 return render_template("welcome.html", alert="Email already exists.")
 
+            recovery_hint = request.form.get("recovery_hint")
+
+            if not name or not email or not password or not recovery_hint:
+                return render_template("welcome.html", alert="All fields are required.")
+            
             cursor.execute(
-                "INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)",
-                name, email, hashed_pw
+                "INSERT INTO users (full_name, email, password_hash, recovery_hint) VALUES (?, ?, ?, ?)",
+                name, email, hashed_pw, recovery_hint
             )
 
             cursor.execute("SELECT user_id FROM users WHERE email = ?", email)
@@ -1096,7 +1101,7 @@ def profile():
         return redirect('/login')
 
     with get_cursor() as cursor:
-        cursor.execute("SELECT full_name, email, created_at FROM users WHERE user_id = ?", (user_id,))
+        cursor.execute("SELECT full_name, email, currency, created_at FROM users WHERE user_id = ?", (user_id,))
         user = cursor.fetchone()
 
         cursor.execute("""
@@ -1246,6 +1251,171 @@ def delete_linked_account(account_id):
     return redirect("/accounts")
 
 
+
+## ---------------- Debt Management Module ----------------
+
+@app.route("/debts", methods=["GET", "POST"])
+@login_required
+def debts():
+    user_id = session["user_id"]
+    with get_cursor() as cursor:
+        if request.method == "POST":
+            lender = request.form.get("lender_name")
+            amount = float(request.form.get("total_amount"))
+            paid = float(request.form.get("paid_amount") or 0)
+            interest = request.form.get("interest_rate") or None
+            due_date = request.form.get("due_date")
+
+            cursor.execute("""
+                INSERT INTO debts (user_id, lender_name, total_amount, paid_amount, interest_rate, due_date)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, user_id, lender, amount, paid, interest, due_date)
+
+        cursor.execute("""
+            SELECT * FROM debts WHERE user_id = ? ORDER BY due_date
+        """, user_id)
+        debts = cursor.fetchall()
+
+    return render_template("debts.html", debts=debts)
+
+
+@app.route("/edit_debt/<int:debt_id>", methods=["GET", "POST"])
+@login_required
+def edit_debt(debt_id):
+    user_id = session["user_id"]
+    with get_cursor() as cursor:
+        if request.method == "POST":
+            lender = request.form.get("lender_name")
+            total = float(request.form.get("total_amount"))
+            paid = float(request.form.get("paid_amount"))
+            interest = request.form.get("interest_rate") or None
+            due = request.form.get("due_date")
+
+            cursor.execute("""
+                UPDATE debts
+                SET lender_name = ?, total_amount = ?, paid_amount = ?, interest_rate = ?, due_date = ?
+                WHERE debt_id = ? AND user_id = ?
+            """, lender, total, paid, interest, due, debt_id, user_id)
+            return redirect("/debts")
+
+        cursor.execute("SELECT * FROM debts WHERE debt_id = ? AND user_id = ?", debt_id, user_id)
+        debt = cursor.fetchone()
+    return render_template("edit_debt.html", debt=debt)
+
+
+@app.route("/delete_debt/<int:debt_id>")
+@login_required
+def delete_debt(debt_id):
+    user_id = session["user_id"]
+    with get_cursor() as cursor:
+        cursor.execute("DELETE FROM debts WHERE debt_id = ? AND user_id = ?", debt_id, user_id)
+    return redirect("/debts")
+
+
+import matplotlib.pyplot as plt  # Add to the top if not already imported
+@app.route("/analysis")
+@login_required
+def analysis():
+    user_id = session["user_id"]
+    alert = session.pop("alert", None)
+    current_month = datetime.now().strftime('%Y-%m')
+
+    with get_cursor() as cursor:
+        # Fetch all transactions
+        cursor.execute("""
+            SELECT amount, transaction_type, transaction_date, description, category_id
+            FROM transactions
+            WHERE user_id = ?
+        """, user_id)
+        transactions = cursor.fetchall()
+
+        # Fetch total budget and expenses for the current month
+        cursor.execute("""
+            SELECT 
+                SUM(b.budget_amount) AS total_budget,
+                SUM(COALESCE(t.total_spent, 0)) AS total_expenses
+            FROM budgets b
+            LEFT JOIN (
+                SELECT category_id, SUM(amount) AS total_spent
+                FROM transactions
+                WHERE user_id = ? AND transaction_type = 'expense'
+                  AND FORMAT(transaction_date, 'yyyy-MM') = ?
+                GROUP BY category_id
+            ) t ON b.category_id = t.category_id
+            WHERE b.user_id = ? AND FORMAT(b.budget_month, 'yyyy-MM') = ?
+        """, user_id, current_month, user_id, current_month)
+        row = cursor.fetchone()
+
+        total_budget = row.total_budget or 0
+        total_expenses = row.total_expenses or 0
+        total_income = sum(t.amount for t in transactions if t.transaction_type == "income")
+
+        budget_used_percentage = round((total_expenses / total_budget) * 100, 1) if total_budget > 0 else 0
+        remaining_budget = total_budget - total_expenses if total_budget > 0 else 0
+
+        # Expense breakdown by category
+        cursor.execute("""
+            SELECT c.category_name, SUM(t.amount) AS total_amount
+            FROM transactions t
+            JOIN categories c ON t.category_id = c.category_id
+            WHERE t.user_id = ? AND t.transaction_type = 'expense'
+            GROUP BY c.category_name
+        """, user_id)
+        category_data = cursor.fetchall()
+
+        if not category_data:
+            session["alert"] = "No category-wise expense data available."
+            return redirect("/transactions")
+
+        chart_labels = [row.category_name for row in category_data]
+        chart_values = [float(row.total_amount) for row in category_data]
+
+    return render_template(
+        "analysis.html",
+        transactions=transactions,
+        total_expenses=total_expenses,
+        total_income=total_income,
+        remaining_budget=remaining_budget,
+        budget_used_percentage=budget_used_percentage,
+        chart_labels=chart_labels,
+        chart_values=chart_values,
+        alert=alert
+    )
+
+@app.route("/update_currency", methods=["POST"])
+@login_required
+def update_currency():
+    user_id = session["user_id"]
+    new_currency = request.form.get("currency")
+
+    with get_cursor() as cursor:
+        cursor.execute("UPDATE users SET currency = ? WHERE user_id = ?", new_currency, user_id)
+
+    return redirect("/profile")
+
+@app.route("/forgot_password", methods=["POST"])
+def forgot_password():
+    email = request.form.get("email")
+    hint = request.form.get("hint")
+    new_pw = request.form.get("new_password")
+
+    if not email or not hint or not new_pw:
+        return render_template("welcome.html", alert="All fields are required.")
+
+    hashed_pw = generate_password_hash(new_pw)
+
+    with get_cursor() as cursor:
+        cursor.execute("SELECT recovery_hint FROM users WHERE email = ?", email)
+        row = cursor.fetchone()
+
+        if not row:
+            return render_template("welcome.html", alert="User not found.")
+        if row.recovery_hint.strip().lower() != hint.strip().lower():
+            return render_template("welcome.html", alert="Incorrect recovery hint.")
+
+        cursor.execute("UPDATE users SET password_hash = ? WHERE email = ?", hashed_pw, email)
+
+    return render_template("welcome.html", alert="Password reset successful. Please log in.")
 
 
 if __name__ == "__main__":

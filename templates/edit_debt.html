@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block title %}Edit Debt{% endblock %}
+{% block content %}
+
+<h2>✏️ Edit Debt</h2>
+
+<form method="POST">
+    <input name="lender_name" value="{{ debt.lender_name }}" required>
+    <input name="total_amount" type="number" step="0.01" value="{{ debt.total_amount }}" required>
+    <input name="paid_amount" type="number" step="0.01" value="{{ debt.paid_amount }}">
+    <input name="interest_rate" type="number" step="0.01" value="{{ debt.interest_rate }}">
+    <input name="due_date" type="date" value="{{ debt.due_date.strftime('%Y-%m-%d') }}" required>
+    <button type="submit">Save Changes</button>
+</form>
+
+<a href="/debts">← Back to Debts</a>
+
+{% endblock %}
