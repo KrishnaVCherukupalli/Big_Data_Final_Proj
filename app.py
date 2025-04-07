@@ -171,6 +171,8 @@ def transactions():
         cursor.execute(query, *params)
         transactions = cursor.fetchall()
     
+        check_and_notify_low_balance(user_id, cursor)
+    
     alert = session.pop("alert", None)
     return render_template("transactions.html", transactions=transactions, alert=alert)
 
@@ -304,6 +306,8 @@ def edit_transaction(transaction_id):
                 WHERE transaction_id = ? AND user_id = ?
             """, category_id, new_type, new_amount, transaction_date,
                  description, receipt_url, new_account_id, transaction_id, user_id)
+            
+            check_and_notify_low_balance(user_id, cursor)
         return redirect("/transactions")
 
     with get_cursor() as cursor:
@@ -345,6 +349,8 @@ def delete_transaction(transaction_id):
             DELETE FROM transactions 
             WHERE transaction_id = ? AND user_id = ?
         """, transaction_id, user_id)
+
+        check_and_notify_low_balance(user_id, cursor)
 
     return redirect("/transactions")
 
@@ -997,14 +1003,42 @@ def delete_notification(notification_id):
 ## ------------ Dashboard Module----------------   ----------------------
 ##-------------------------------------------------------------------
 
+def check_and_notify_low_balance(user_id, cursor):
+    cursor.execute("""
+        SELECT COALESCE(SUM(current_balance), 0)
+        FROM user_accounts
+        WHERE user_id = ? AND is_active = 1
+    """, (user_id,))
+    total_balance = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COALESCE(low_balance_threshold, 100) FROM users WHERE user_id = ?", (user_id,))
+    threshold = cursor.fetchone()[0]
+
+    # Check if a low balance notification already exists and is unread
+    cursor.execute("""
+        SELECT COUNT(*) FROM notifications 
+        WHERE user_id = ? AND notification_type = 'low_balance' AND is_read = 0
+    """, (user_id,))
+    existing_unread = cursor.fetchone()[0]
+
+    if total_balance < threshold and existing_unread == 0:
+        cursor.execute("""
+            INSERT INTO notifications (user_id, notification_type, message, related_entity_type, related_entity_id)
+            VALUES (?, 'low_balance', 'Your total balance is below ${}', 'account', NULL)
+        """.format(threshold), (user_id,))
+
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
     user_id = session["user_id"]
+    
     today = datetime.today()
     month_start = datetime(today.year, today.month, 1)
 
     with get_cursor() as cursor:
+        check_and_notify_low_balance(user_id, cursor)
 
         # Total account balance
         cursor.execute("""
@@ -1101,7 +1135,17 @@ def profile():
         return redirect('/login')
 
     with get_cursor() as cursor:
-        cursor.execute("SELECT full_name, email, currency, created_at FROM users WHERE user_id = ?", (user_id,))
+        if request.method == "POST":
+            threshold = request.form.get("low_balance_threshold")
+            if threshold:
+                cursor.execute("UPDATE users SET low_balance_threshold = ? WHERE user_id = ?", (threshold, user_id))
+            return redirect("/profile")
+        
+        cursor.execute("""
+            SELECT full_name, email, currency, created_at, 
+                   ISNULL(low_balance_threshold, 100) AS low_balance_threshold 
+            FROM users WHERE user_id = ?
+        """, (user_id,))
         user = cursor.fetchone()
 
         cursor.execute("""
@@ -1126,7 +1170,9 @@ def profile():
                            transaction_count=transaction_count,
                            budget_count=budget_count,
                            savings_count=savings_count,
-                           account_count=account_count)
+                           account_count=account_count,
+                           low_balance_threshold=user.low_balance_threshold)
+
 
 ##-----------------Change Password route--------------------
 @app.route('/change_password', methods=['POST'])
