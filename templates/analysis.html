@@ -28,10 +28,15 @@
             <p>{{ budget_used_percentage }}%</p>
         </div>
     </div>
+</div>
 
+<div class="charts-container">
+    <!-- Expense Pie Chart -->
     <div class="chart">
+        <h3>Spending Breakdown by Category</h3>
         {% if chart_labels %}
             <canvas id="expenseChart" width="350" height="350"></canvas>
+            <button onclick="downloadChartAsImage('expenseChart')">Download Expense Chart</button>
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script>
                 const ctx = document.getElementById('expenseChart').getContext('2d');
@@ -71,11 +76,76 @@
             <p>No expense category data available for this month.</p>
         {% endif %}
     </div>
+
+    <!-- Income vs Expenses Bar Chart -->
+    <div class="chart">
+        <h3>Income vs Expenses (Last 6 Months)</h3>
+        {% if trend_labels %}
+            <canvas id="trendChart" width="100" height="100"></canvas>
+            <button onclick="downloadChartAsImage('trendChart')">Download Bar Chart</button>
+            <script>
+                const trendCtx = document.getElementById('trendChart').getContext('2d');
+                new Chart(trendCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ trend_labels | tojson }},
+                        datasets: [
+                            {
+                                label: 'Income',
+                                data: {{ income_values | tojson }},
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                            },
+                            {
+                                label: 'Expenses',
+                                data: {{ expense_values | tojson }},
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                }
+                            }
+                        }
+                    }
+                });
+            </script>
+        {% else %}
+            <p>No data available for trend analysis.</p>
+        {% endif %}
+    </div>
 </div>
 
 <div class="back-link">
     <a href="/dashboard">← Back to Dashboard</a>
 </div>
+
+<script>
+    function downloadChartAsImage(chartId) {
+        const canvas = document.getElementById(chartId);
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = chartId + '.png';
+        link.click();
+    }
+</script>
 
 <style>
     h1 {
@@ -101,9 +171,17 @@
         max-width: 350px;
     }
 
+    .charts-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 40px;
+        margin-top: 40px;
+    }
+
     .chart {
-        flex: 1;
-        min-width: 350px;
+        flex: 1 1 400px;
+        max-width: 500px;
         text-align: center;
     }
 
@@ -137,6 +215,26 @@
 
     .back-link a:hover {
         text-decoration: underline;
+    }
+
+    canvas {
+        max-width: 100%;
+        height: auto;
+    }
+
+    button {
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 8px;
+        background-color: var(--link-color);
+        color: white;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    button:hover {
+        background-color: #555;
     }
 </style>
 {% endblock %}

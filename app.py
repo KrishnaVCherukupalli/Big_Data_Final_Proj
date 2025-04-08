@@ -13,6 +13,9 @@ from contextlib import contextmanager
 from db import with_connection
 from helpers import login_required
 from flask import jsonify
+import random
+from flask import render_template, session
+import requests
 
 
 ## -------------Flask configuration ----------------
@@ -81,7 +84,7 @@ def register():
         if not name or not email or not password:
             return render_template("welcome.html", alert="All fields are required.")
 
-        hashed_pw = generate_password_hash(password, method="pbkdf2:sha256")
+        hashed_pw = generate_password_hash(password)
 
         with get_cursor() as cursor:
             cursor.execute("SELECT * FROM users WHERE email = ?", email)
@@ -1158,7 +1161,28 @@ def dashboard():
         """, user_id)
         notifications = cursor.fetchall()
 
-    return render_template("dashboard.html",
+    # List of budgeting tips
+    budgeting_tips = [
+        "Track your spending to identify areas where you can cut back.",
+        "Set clear financial goals to stay motivated and focused.",
+        "Prioritize building an emergency fund to cover unexpected expenses.",
+        "Use the 50/30/20 rule: 50% for needs, 30% for wants, and 20% for savings.",
+        "Review and adjust your budget regularly to reflect changes in income and expenses.",
+        "Avoid impulse purchases by implementing a 24-hour waiting period.",
+        "Utilize budgeting apps to monitor and manage your finances effectively.",
+        "Automate your savings to ensure consistent contributions to your goals.",
+        "Limit the use of credit cards to prevent accumulating high-interest debt.",
+        "Plan for large purchases by saving up in advance rather than relying on credit."
+    ]
+
+    # Check if 'daily_tip' is already in the session
+    if 'daily_tip' not in session:
+        session['daily_tip'] = random.choice(budgeting_tips)
+
+    daily_tip = session['daily_tip']
+
+    return render_template(
+        'dashboard.html',
         total_balance=total_balance,
         total_income=total_income,
         total_expenses=total_expenses,
@@ -1167,7 +1191,8 @@ def dashboard():
         chart_values=chart_values,
         upcoming_bills=upcoming_bills,
         recurring=recurring,
-        notifications=notifications
+        notifications=notifications,
+        daily_tip=daily_tip
     )
 
 ##-------------User Profile Module-----------------------
@@ -1406,6 +1431,8 @@ def delete_debt(debt_id):
 
 
 import matplotlib.pyplot as plt  # Add to the top if not already imported
+from calendar import month_name
+
 @app.route("/analysis")
 @login_required
 def analysis():
@@ -1414,7 +1441,7 @@ def analysis():
     current_month = datetime.now().strftime('%Y-%m')
 
     with get_cursor() as cursor:
-        # Fetch all transactions
+        # All transactions
         cursor.execute("""
             SELECT amount, transaction_type, transaction_date, description, category_id
             FROM transactions
@@ -1422,7 +1449,7 @@ def analysis():
         """, user_id)
         transactions = cursor.fetchall()
 
-        # Fetch total budget and expenses for the current month
+        # Total budget and expenses
         cursor.execute("""
             SELECT 
                 SUM(b.budget_amount) AS total_budget,
@@ -1442,11 +1469,10 @@ def analysis():
         total_budget = row.total_budget or 0
         total_expenses = row.total_expenses or 0
         total_income = sum(t.amount for t in transactions if t.transaction_type == "income")
-
         budget_used_percentage = round((total_expenses / total_budget) * 100, 1) if total_budget > 0 else 0
         remaining_budget = total_budget - total_expenses if total_budget > 0 else 0
 
-        # Expense breakdown by category
+        # Pie chart data
         cursor.execute("""
             SELECT c.category_name, SUM(t.amount) AS total_amount
             FROM transactions t
@@ -1456,12 +1482,63 @@ def analysis():
         """, user_id)
         category_data = cursor.fetchall()
 
-        if not category_data:
-            session["alert"] = "No category-wise expense data available."
-            return redirect("/transactions")
-
         chart_labels = [row.category_name for row in category_data]
         chart_values = [float(row.total_amount) for row in category_data]
+
+        # Last 6 months: income vs expense
+        cursor.execute("""
+            SELECT 
+                FORMAT(transaction_date, 'yyyy-MM') AS month,
+                SUM(CASE WHEN transaction_type = 'income' THEN amount ELSE 0 END) AS income,
+                SUM(CASE WHEN transaction_type = 'expense' THEN amount ELSE 0 END) AS expense
+            FROM transactions
+            WHERE user_id = ?
+              AND transaction_date >= DATEADD(MONTH, -5, GETDATE())
+            GROUP BY FORMAT(transaction_date, 'yyyy-MM')
+            ORDER BY month
+        """, user_id)
+        trend_data = cursor.fetchall()
+
+        trend_labels = [datetime.strptime(row.month, "%Y-%m").strftime("%b %Y") for row in trend_data]
+        income_values = [float(row.income or 0) for row in trend_data]
+        expense_values = [float(row.expense or 0) for row in trend_data]
+
+                # Monthly savings and debt trends (last 6 months)
+        cursor.execute("""
+            SELECT 
+                FORMAT(goal_date, 'yyyy-MM') AS month,
+                SUM(current_amount) AS total_savings
+            FROM (
+                SELECT goal_id, current_amount, target_date AS goal_date
+                FROM savings_goals
+                WHERE user_id = ?
+            ) AS sg
+            GROUP BY FORMAT(goal_date, 'yyyy-MM')
+            ORDER BY month
+        """, user_id)
+        savings_trend = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT 
+                FORMAT(due_date, 'yyyy-MM') AS month,
+                SUM(total_amount - paid_amount) AS total_debt
+            FROM debts
+            WHERE user_id = ?
+            GROUP BY FORMAT(due_date, 'yyyy-MM')
+            ORDER BY month
+        """, user_id)
+        debt_trend = cursor.fetchall()
+
+        # Align months
+        trend_months = list(set([row.month for row in savings_trend] + [row.month for row in debt_trend]))
+        trend_months.sort()
+
+        savings_map = {row.month: float(row.total_savings or 0) for row in savings_trend}
+        debt_map = {row.month: float(row.total_debt or 0) for row in debt_trend}
+
+        savings_line = [savings_map.get(month, 0) for month in trend_months]
+        debt_line = [debt_map.get(month, 0) for month in trend_months]
+
 
     return render_template(
         "analysis.html",
@@ -1472,8 +1549,15 @@ def analysis():
         budget_used_percentage=budget_used_percentage,
         chart_labels=chart_labels,
         chart_values=chart_values,
-        alert=alert
+        trend_labels=trend_labels,
+        income_values=income_values,
+        expense_values=expense_values,
+        alert=alert,trend_months=trend_months,
+        savings_line=savings_line,
+        debt_line=debt_line
+
     )
+
 
 @app.route("/update_currency", methods=["POST"])
 @login_required
