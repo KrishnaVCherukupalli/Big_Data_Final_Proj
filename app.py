@@ -799,7 +799,8 @@ def generate_recurring():
 
         for r in recurs:
             last_date = r.last_generated_date or r.start_date
-            next_due = last_date
+            if isinstance(last_date, str):
+                last_date = datetime.strptime(last_date, "%Y-%m-%d").date()
 
             # Determine next due date
             if r.frequency == 'daily':
@@ -807,7 +808,7 @@ def generate_recurring():
             elif r.frequency == 'weekly':
                 next_due = last_date + timedelta(weeks=1)
             elif r.frequency == 'monthly':
-                next_due = (last_date.replace(day=1) + timedelta(days=32)).replace(day=1)
+                next_due = (last_date.replace(day=28) + timedelta(days=4)).replace(day=1)
             elif r.frequency == 'yearly':
                 next_due = last_date.replace(year=last_date.year + 1)
 
