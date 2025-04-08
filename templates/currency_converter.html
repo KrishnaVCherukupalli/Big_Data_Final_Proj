@@ -1,0 +1,103 @@
+{% extends "layout.html" %}
+
+{% block title %}Currency Converter - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="converter-wrapper">
+  <div class="converter-card">
+    <h2 class="title">💱 Currency Converter</h2>
+    <form method="POST" class="converter-form">
+      <label for="amount">Amount:</label>
+      <input type="number" step="0.01" name="amount" id="amount" placeholder="Enter amount" required>
+
+      <label for="from_currency">From Currency:</label>
+      <select name="from_currency" id="from_currency" required>
+        {% for currency in currencies %}
+        <option value="{{ currency }}" {% if currency == "USD" %}selected{% endif %}>{{ currency }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="to_currency">To Currency:</label>
+      <select name="to_currency" id="to_currency" required>
+        {% for currency in currencies %}
+        <option value="{{ currency }}" {% if currency == "INR" %}selected{% endif %}>{{ currency }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn-convert">🔁 Convert</button>
+    </form>
+
+    {% if result %}
+    <div class="result-box">
+      {{ result }}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .converter-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 10px 20px;
+  }
+
+  .converter-card {
+    width: 100%;
+    max-width: 500px;
+    background-color: var(--card-bg);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  .converter-card .title {
+    margin-bottom: 25px;
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .converter-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .converter-form input,
+  .converter-form select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+  }
+
+  .btn-convert {
+    width: 100%;
+    padding: 12px;
+    background-color: #2e86de;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s ease;
+  }
+
+  .btn-convert:hover {
+    background-color: #216ab4;
+  }
+
+  .result-box {
+    margin-top: 20px;
+    font-size: 18px;
+    padding: 15px;
+    background: #eafaf1;
+    color: #1e7e34;
+    text-align: center;
+    border-radius: 8px;
+  }
+</style>
+{% endblock %}

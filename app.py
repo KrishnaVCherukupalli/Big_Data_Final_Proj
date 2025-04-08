@@ -1510,6 +1510,45 @@ def forgot_password():
 
     return render_template("welcome.html", alert="Password reset successful. Please log in.")
 
+import requests  # make sure this is at the top of app.py
+
+import requests
+
+@app.route("/currency_converter", methods=["GET", "POST"])
+@login_required
+def currency_converter():
+    result = None
+    currencies = ["USD", "CAD", "EUR", "INR", "GBP", "AUD", "JPY"]
+    access_key = '8c2d846ff5989768a9fb022778995be1'  # Replace with your actual access key
+
+    if request.method == "POST":
+        amount = float(request.form.get("amount", 0))
+        from_currency = request.form.get("from_currency")
+        to_currency = request.form.get("to_currency")
+
+        if from_currency == to_currency:
+            result = "Please select different currencies."
+        else:
+            url = "https://api.exchangerate.host/convert"
+            params = {
+                "access_key": access_key,
+                "from": from_currency,
+                "to": to_currency,
+                "amount": amount
+            }
+            response = requests.get(url, params=params)
+            data = response.json()
+
+            if data.get("success"):
+                converted_amount = round(data["result"], 2)
+                result = f"{amount} {from_currency} = {converted_amount} {to_currency}"
+            else:
+                error_info = data.get("error", {}).get("info", "Unknown error.")
+                result = f"Failed to fetch conversion rate. Error: {error_info}"
+
+    return render_template("currency_converter.html", currencies=currencies, result=result)
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
