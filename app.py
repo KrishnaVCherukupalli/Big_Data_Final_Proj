@@ -81,7 +81,7 @@ def register():
         if not name or not email or not password:
             return render_template("welcome.html", alert="All fields are required.")
 
-        hashed_pw = generate_password_hash(password)
+        hashed_pw = generate_password_hash(password, method="pbkdf2:sha256")
 
         with get_cursor() as cursor:
             cursor.execute("SELECT * FROM users WHERE email = ?", email)
